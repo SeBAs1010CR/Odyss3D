@@ -1,0 +1,4 @@
+{
+  "_comentario": "Agrega tus productos aqui. La imagen va en /public/images/products/ con el nombre indicado en 'image', o usa una URL completa. El Home los muestra automaticamente.",
+  "products": []
+}
