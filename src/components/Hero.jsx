@@ -1,7 +1,9 @@
+"use client";
+
 import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 
-const HeroScene = lazy(() => import("./HeroScene.jsx"));
+const HeroScene = lazy(() => import("./HeroScene"));
 
 const fadeUp = (delay) => ({
   initial: { opacity: 0, y: 24 },
@@ -11,14 +13,9 @@ const fadeUp = (delay) => ({
 
 export default function Hero() {
   return (
-    <section
-      id="inicio"
-      className="hero"
-    >
-      {/* Grid tecnológico sutil */}
+    <section id="inicio" className="hero">
       <div className="hero-grid" aria-hidden />
 
-      {/* Highlight azul sutil */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -27,7 +24,6 @@ export default function Hero() {
         aria-hidden
       />
 
-      {/* Escena 3D decorativa */}
       <Suspense fallback={null}>
         <HeroScene />
       </Suspense>
@@ -60,7 +56,6 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* Indicador de scroll */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

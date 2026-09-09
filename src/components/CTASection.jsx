@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 
 export default function CTASection() {
@@ -17,8 +19,8 @@ export default function CTASection() {
             <span className="cta-sub">Nosotros le damos forma.</span>
           </h2>
           <p className="cta-text">
-            Cuéntanos qué necesitas fabricar y te respondemos con una
-            propuesta clara.
+            Cuéntanos qué necesitas fabricar y te respondemos con una propuesta
+            clara.
           </p>
           <a href="#contacto" className="btn btn-primary cta-btn">
             Solicitar cotización

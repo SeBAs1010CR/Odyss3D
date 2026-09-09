@@ -16,19 +16,27 @@ npm install
 npm run dev
 ```
 
-Abrir `http://localhost:5173`.
+Abrir `http://localhost:3000`.
 
 Build de producción:
 
 ```bash
 npm run build
-npm run preview
+npm run start
 ```
+
+Este proyecto usa **Next.js** (App Router). Los componentes que usan estado,
+scroll, animaciones (framer-motion) o WebGL/Three.js están marcados con
+`"use client"`.
 
 ## Estructura
 
 ```
 src/
+├── app/
+│   ├── layout.js         Layout raíz + metadata + fuentes
+│   ├── page.js           Página principal
+│   └── globals.css       Sistema de diseño (estilos globales)
 ├── components/
 │   ├── Navbar.jsx        Navegación sticky
 │   ├── Hero.jsx          Hero + elemento 3D decorativo
@@ -38,9 +46,8 @@ src/
 │   ├── About.jsx         Nosotros
 │   ├── CTASection.jsx    CTA final
 │   └── Footer.jsx
-├── data/
-│   └── products.json     Fuente de datos de productos
-└── index.css             Sistema de diseño
+└── data/
+    └── products.json     Fuente de datos de productos
 ```
 
 ## Agregar productos

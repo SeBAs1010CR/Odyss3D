@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import productsData from "../data/products.json";
@@ -62,7 +64,10 @@ export default function Products() {
                 d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"
                 strokeLinejoin="round"
               />
-              <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" strokeLinejoin="round" />
+              <path
+                d="M12 12l8-4.5M12 12v9M12 12L4 7.5"
+                strokeLinejoin="round"
+              />
             </svg>
             <h3 className="products-empty-title">Próximamente</h3>
             <p className="products-empty-text">
@@ -118,7 +123,9 @@ export default function Products() {
                   <h3 className="product-card-name">{product.name}</h3>
                   <div className="product-card-foot">
                     {product.price ? (
-                      <span className="product-card-price">{product.price}</span>
+                      <span className="product-card-price">
+                        {product.price}
+                      </span>
                     ) : (
                       <span className="product-card-price">Consultar</span>
                     )}
