@@ -6,7 +6,6 @@ import {
   DEFAULT_CONFIG,
   DEFAULT_INPUTS,
   ROUNDING_OPTIONS,
-  PACKAGING_LABELS,
   computeAll,
   formatCRC,
   formatMoney,
