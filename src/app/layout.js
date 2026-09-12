@@ -1,4 +1,5 @@
 import "./globals.css";
+import WhatsAppButton from "../components/WhatsAppButton";
 
 export const metadata = {
   title: "ODYSS3D - Impresión 3D, Diseño y Fabricación",
@@ -24,7 +25,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <WhatsAppButton />
+      </body>
     </html>
   );
 }

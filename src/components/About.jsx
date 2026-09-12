@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 
 const STATS = [
-  { value: "FDM · SLA", label: "Tecnologías de impresión" },
-  { value: "Precisión", label: "Tolerancias de fabricación" },
-  { value: "Serie", label: "Producción de piezas finales" },
+  { value: "FDM", label: "Tecnología de impresión" },
+  { value: "PLA · ABS · PETG · TPU", label: "Materiales" },
+  { value: "Multicolor", label: "Impresión a todo color" },
 ];
 
 export default function About() {

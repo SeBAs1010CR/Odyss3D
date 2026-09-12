@@ -22,7 +22,7 @@ export default function CTASection() {
             Cuéntanos qué necesitas fabricar y te respondemos con una propuesta
             clara.
           </p>
-          <a href="#contacto" className="btn btn-primary cta-btn">
+          <a href="/contacto" className="btn btn-primary cta-btn">
             Solicitar cotización
           </a>
         </motion.div>

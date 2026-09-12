@@ -3,6 +3,8 @@ import { ADMIN_EMAIL_DOMAIN } from "./constants";
 import { startOfRange, startOfDay, toNum } from "./format";
 import { optimizeImage, slug } from "./utils";
 import type {
+  ContactRequest,
+  ContactRequestStatus,
   Customer,
   CustomerWithStats,
   DashboardData,
@@ -704,7 +706,7 @@ export async function deleteStorageObject(
 
 /** Resuelve URLs firmadas de imágenes privadas (solo admin). */
 export async function resolveSignedUrls(
-  bucket: "products" | "orders",
+  bucket: "products" | "orders" | "cotizaciones",
   paths: (string | null | undefined)[]
 ): Promise<Record<string, string>> {
   const clean = [...new Set(paths.filter((p): p is string => !!p && !/^https?:\/\//.test(p)))];
@@ -729,3 +731,44 @@ export async function resolveSignedUrls(
 
   return out;
 }
+
+/* ============ SOLICITUDES DE COTIZACIÓN ============ */
+
+export async function fetchContactRequests(): Promise<ContactRequest[]> {
+  const { data, error } = await createClient()
+    .from("contact_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("No se pudieron cargar las solicitudes.");
+  return (data ?? []) as ContactRequest[];
+}
+
+export async function updateContactRequestStatus(
+  id: string,
+  status: ContactRequestStatus
+): Promise<void> {
+  const { error } = await createClient()
+    .from("contact_requests")
+    .update({ status })
+    .eq("id", id);
+  if (error) throw new Error("No se pudo actualizar la solicitud.");
+}
+
+export async function deleteContactRequest(request: ContactRequest): Promise<void> {
+  const paths = (request.file_paths ?? []).filter(
+    (p) => !/^https?:\/\//.test(p)
+  );
+  if (paths.length > 0) {
+    const { error: storageError } = await createClient()
+      .storage.from("cotizaciones")
+      .remove(paths);
+    if (storageError) throw new Error("No se pudo eliminar los archivos.");
+  }
+  const { error } = await createClient()
+    .from("contact_requests")
+    .delete()
+    .eq("id", request.id);
+  if (error) throw new Error("No se pudo eliminar la solicitud.");
+}
+
+/* ============ SOLICITUDES DE COTIZACIÓN (fin) ============ */

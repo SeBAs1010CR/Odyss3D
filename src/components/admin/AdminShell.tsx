@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   BarChart3,
   Boxes,
+  Inbox,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/admin/orders", label: "Pedidos", icon: Package },
   { href: "/admin/customers", label: "Clientes", icon: Users },
   { href: "/admin/products", label: "Productos", icon: Boxes },
+  { href: "/admin/requests", label: "Solicitudes", icon: Inbox },
   { href: "/admin/statistics", label: "Estadísticas", icon: BarChart3 },
   { href: "/admin/settings", label: "Configuración", icon: Settings },
 ];

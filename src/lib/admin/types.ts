@@ -97,6 +97,18 @@ export interface Product {
   images?: ProductImage[];
 }
 
+export type ContactRequestStatus = "nuevo" | "respondido" | "cerrado";
+
+export interface ContactRequest {
+  id: string;
+  name: string;
+  contact: string;
+  message: string | null;
+  file_paths: string[];
+  status: ContactRequestStatus;
+  created_at: string;
+}
+
 export type SettingsRecord = Record<string, number>;
 
 export interface DashboardData {

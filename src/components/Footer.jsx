@@ -14,7 +14,7 @@ export default function Footer() {
           <a href="#productos">Productos</a>
           <a href="#servicios">Servicios</a>
           <a href="#nosotros">Nosotros</a>
-          <a href="#contacto">Contacto</a>
+          <a href="/contacto">Contacto</a>
         </div>
         <div className="footer-contact">
           <span>Impresión 3D · Diseño · Prototipado · Fabricación</span>

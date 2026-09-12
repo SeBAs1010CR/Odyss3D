@@ -6,7 +6,7 @@ const SERVICES = [
   {
     title: "Impresión 3D",
     description:
-      "FAB, SLA y multicolor. Materiales de alta resistencia con acabados de precisión.",
+      "Impresión 3D FDM y multicolor. Materiales como PLA, ABS, PETG y TPU con acabados de precisión.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -47,7 +47,7 @@ const SERVICES = [
   {
     title: "Prototipado",
     description:
-      "Itera rápido: pruebas funcionales y validación de producto en días, no semanas.",
+      "Itera rápido: pruebas funcionales y validación de producto con tiempos de entrega cortos.",
     icon: (
       <svg
         viewBox="0 0 24 24"

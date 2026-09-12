@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   const { bucket, paths } = body;
   if (
     !bucket ||
-    (bucket !== "products" && bucket !== "orders") ||
+    (bucket !== "products" && bucket !== "orders" && bucket !== "cotizaciones") ||
     !Array.isArray(paths) ||
     paths.length === 0 ||
     paths.length > 100
