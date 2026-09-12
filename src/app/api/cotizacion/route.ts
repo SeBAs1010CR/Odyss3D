@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const BUCKET = "cotizaciones";
 const MAX_FILES = 5;
@@ -27,6 +28,21 @@ function getTransporter() {
   const pass = process.env.MAIL_PASS;
   if (!host || !user || !pass) return null;
   return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+}
+
+function emailSubject(name: string) {
+  return `Cotización de ${name}`;
+}
+
+function emailHtml(name: string, contact: string, message: string, uploaded: FileEntry[]) {
+  return `
+    <h3>Nueva solicitud de cotización — ODYSS3D</h3>
+    <p><strong>Nombre:</strong> ${name.replace(/</g, "&lt;")}</p>
+    <p><strong>Contacto:</strong> ${contact.replace(/</g, "&lt;")}</p>
+    <p><strong>Mensaje:</strong> ${message.replace(/</g, "&lt;") || "—"}</p>
+    <p><strong>Archivos:</strong> ${uploaded.length || "ninguno"}</p>
+    <ul>${uploaded.map((u) => `<li>${u.name.replace(/</g, "&lt;")}</li>`).join("")}</ul>
+  `;
 }
 
 export async function POST(request: Request) {
@@ -92,35 +108,45 @@ export async function POST(request: Request) {
     if (insertError) throw insertError;
 
     let emailSent = false;
-    const transporter = getTransporter();
-    const to = process.env.MAIL_TO;
-    if (transporter && to) {
+    const to = process.env.MAIL_TO || process.env.RESEND_TO;
+    if (to) {
       try {
-        await transporter.sendMail({
-          from: process.env.MAIL_FROM ?? process.env.MAIL_USER,
-          to,
-          subject: `Cotización de ${name}`,
-          text: [
-            `Nombre: ${name}`,
-            `Contacto: ${contact}`,
-            `Mensaje: ${message || "—"}`,
-            "",
-            `Archivos adjuntos: ${uploaded.length || "ninguno"}`,
-            ...uploaded.map((u) => `  • ${u.name}`),
-          ].join("\n"),
-          html: `
-            <h3>Nueva solicitud de cotización — ODYSS3D</h3>
-            <p><strong>Nombre:</strong> ${name.replace(/</g, "&lt;")}</p>
-            <p><strong>Contacto:</strong> ${contact.replace(/</g, "&lt;")}</p>
-            <p><strong>Mensaje:</strong> ${message.replace(/</g, "&lt;") || "—"}</p>
-            <p><strong>Archivos:</strong> ${uploaded.length || "ninguno"}</p>
-            <ul>${uploaded.map((u) => `<li>${u.name.replace(/</g, "&lt;")}</li>`).join("")}</ul>
-          `,
-          attachments: uploaded.map((u) => ({
-            filename: u.name,
-            content: u.buffer,
-          })),
-        });
+        if (process.env.RESEND_API_KEY) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const { error: sendError } = await resend.emails.send({
+            from: process.env.RESEND_FROM ?? "onboarding@resend.dev",
+            to,
+            subject: emailSubject(name),
+            html: emailHtml(name, contact, message, uploaded),
+            attachments: uploaded.map((u) => ({
+              filename: u.name,
+              content: u.buffer,
+            })),
+          });
+          if (sendError) throw sendError;
+        } else {
+          const transporter = getTransporter();
+          if (transporter) {
+            await transporter.sendMail({
+              from: process.env.MAIL_FROM ?? process.env.MAIL_USER,
+              to,
+              subject: emailSubject(name),
+              text: [
+                `Nombre: ${name}`,
+                `Contacto: ${contact}`,
+                `Mensaje: ${message || "—"}`,
+                "",
+                `Archivos adjuntos: ${uploaded.length || "ninguno"}`,
+                ...uploaded.map((u) => `  • ${u.name}`),
+              ].join("\n"),
+              html: emailHtml(name, contact, message, uploaded),
+              attachments: uploaded.map((u) => ({
+                filename: u.name,
+                content: u.buffer,
+              })),
+            });
+          }
+        }
         emailSent = true;
       } catch (err) {
         console.error("Error enviando correo:", err);
