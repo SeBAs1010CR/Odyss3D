@@ -6,6 +6,18 @@
 create extension if not exists pgcrypto;
 
 -- ---------- helper: ¿el usuario actual es admin? ----------
+-- (se define DESPUÉS de crear public.profiles, ya que language sql valida su cuerpo)
+
+-- ---------- profiles ----------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  name text,
+  role text not null default 'admin' check (role in ('admin', 'staff')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -18,16 +30,6 @@ as $$
     where p.id = auth.uid() and p.role = 'admin'
   );
 $$;
-
--- ---------- profiles ----------
-create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email text,
-  name text,
-  role text not null default 'admin' check (role in ('admin', 'staff')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
 
 -- cada usuario de auth.users obtiene su perfil automáticamente
 create or replace function public.handle_new_user()

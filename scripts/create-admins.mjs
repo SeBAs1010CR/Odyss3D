@@ -28,11 +28,11 @@ function loadEnvLocal() {
 
 const env = { ...loadEnvLocal(), ...process.env };
 
-const URL = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_URL = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE = env.SUPABASE_SERVICE_ROLE_KEY;
 const PASSWORD = env.ADMIN_INITIAL_PASSWORD;
 
-if (!URL || !SERVICE_ROLE) {
+if (!SUPABASE_URL || !SERVICE_ROLE) {
   console.error("Faltan SUPABASE_URL (o NEXT_PUBLIC_SUPABASE_URL) y SUPABASE_SERVICE_ROLE_KEY.");
   process.exit(1);
 }
@@ -41,7 +41,7 @@ if (!PASSWORD) {
   process.exit(1);
 }
 
-const supabase = createClient(URL, SERVICE_ROLE, {
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
@@ -50,11 +50,21 @@ const ADMINS = [
   { email: "sebas@odyss3d.com", name: "Sebas" },
 ];
 
-for (const { email, name } of ADMINS) {
-  const { data: existing } = await supabase.auth.admin.getUserByEmail(email);
+const { data: users, error: listError } = await supabase.auth.admin.listUsers({
+  page: 1,
+  perPage: 1000,
+});
+if (listError) {
+  console.error("No se pudo listar usuarios:", listError.message);
+  process.exit(1);
+}
+const byEmail = new Map((users?.users ?? []).map((u) => [u.email, u]));
 
-  if (existing?.user) {
-    await supabase.auth.admin.updateUserById(existing.user.id, {
+for (const { email, name } of ADMINS) {
+  const existing = byEmail.get(email);
+
+  if (existing) {
+    await supabase.auth.admin.updateUserById(existing.id, {
       password: PASSWORD,
       email_confirm: true,
       user_metadata: { full_name: name },
