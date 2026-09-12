@@ -11,7 +11,7 @@ export default function AdminLogin() {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -30,13 +30,13 @@ export default function AdminLogin() {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
-    setError(false);
+    setError(null);
 
     const result = await signIn(user, password);
 
     if (!result.ok) {
       setBusy(false);
-      setError(true);
+      setError(result.message ?? "Usuario o contraseña incorrectos.");
       setPassword("");
       return;
     }
@@ -72,7 +72,7 @@ export default function AdminLogin() {
         </div>
 
         {error && (
-          <div className="login-error-box">Usuario o contraseña incorrectos.</div>
+          <div className="login-error-box">{error}</div>
         )}
 
         <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>

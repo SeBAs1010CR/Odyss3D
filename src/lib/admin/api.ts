@@ -21,12 +21,28 @@ const normalizeEmail = (username: string): string => {
   return u.includes("@") ? u : `${u}@${ADMIN_EMAIL_DOMAIN}`;
 };
 
-export async function signIn(username: string, password: string): Promise<{ ok: boolean }> {
-  const { error } = await createClient().auth.signInWithPassword({
-    email: normalizeEmail(username),
-    password,
-  });
-  return { ok: !error };
+export async function signIn(
+  username: string,
+  password: string
+): Promise<{ ok: boolean; message?: string }> {
+  let error: { message?: string; status?: number } | null = null;
+  try {
+    const res = await createClient().auth.signInWithPassword({
+      email: normalizeEmail(username),
+      password,
+    });
+    error = res.error;
+  } catch (e) {
+    return { ok: false, message: "No se pudo conectar con Supabase." };
+  }
+
+  if (!error) return { ok: true };
+
+  // 400 = credenciales inválidas. Cualquier otra cosa = red/config.
+  if (error.status === 400) {
+    return { ok: false, message: "Usuario o contraseña incorrectos." };
+  }
+  return { ok: false, message: `No se pudo iniciar sesión (${error.message ?? "error de conexión"}).` };
 }
 
 export async function signOut(): Promise<void> {
