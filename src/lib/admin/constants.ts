@@ -33,6 +33,15 @@ export const PAYMENT_METHODS = [
   "Pendiente",
 ] as const;
 
+export const TRANSPORT_TYPES = [
+  "Recogida en tienda",
+  "Envío mensajero",
+  "Uber / PedidosYa",
+  "Correos de Costa Rica",
+  "Moovin",
+  "Envío por acordar",
+] as const;
+
 export const PRODUCT_CATEGORIES = [
   "Impreso 3D",
   "Figuras",
@@ -64,6 +73,11 @@ export const SETTINGS_FIELDS: {
   { key: "margin_50_99", label: "Margen 50–99 piezas", defaultValue: 35, suffix: "%" },
   { key: "margin_100", label: "Margen 100+ piezas", defaultValue: 30, suffix: "%" },
   { key: "minimum_price", label: "Precio mínimo", defaultValue: 800, suffix: "₡" },
+  { key: "discount_20", label: "Descuento 21–50 uds", defaultValue: 18.75, suffix: "%", step: 0.01, hint: "Se aplica sobre el precio del catálogo" },
+  { key: "discount_50", label: "Descuento 51–100 uds", defaultValue: 25, suffix: "%", step: 0.01 },
+  { key: "discount_100", label: "Descuento 101+ uds", defaultValue: 37.5, suffix: "%", step: 0.01 },
+  { key: "min_margin", label: "Margen mínimo", defaultValue: 40, suffix: "%", hint: "El precio nunca baja de costo ÷ (1 − margen)" },
+  { key: "machine_fund_percent", label: "Reserva de maquinaria", defaultValue: 10, suffix: "%", hint: "Se descuenta de la ganancia para reemplazo de impresoras" },
 ];
 
 export const SETTINGS_DEFAULTS: SettingsRecord = Object.fromEntries(

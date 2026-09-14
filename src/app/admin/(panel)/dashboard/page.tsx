@@ -6,9 +6,10 @@ import {
   Boxes,
   CheckCircle2,
   Clock,
+  Factory,
   Hourglass,
-  Printer,
   PiggyBank,
+  Printer,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -82,6 +83,18 @@ export default function DashboardPage() {
           color="#22c55e"
           label="Ganancia estimada"
           value={`₡${formatMoney(data.month_profit)}`}
+        />
+        <StatCard
+          icon={<TrendingUp />}
+          color="#4ade80"
+          label="Ganancia neta (mes)"
+          value={`₡${formatMoney(data.month_profit - data.month_machine_fund)}`}
+        />
+        <StatCard
+          icon={<Factory />}
+          color="#f59e0b"
+          label="Fondo maquinaria (mes)"
+          value={`₡${formatMoney(data.month_machine_fund)}`}
         />
         <StatCard
           icon={<Users />}

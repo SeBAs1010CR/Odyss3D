@@ -1,14 +1,18 @@
 import { createClient } from "@/lib/supabase/client";
-import { ADMIN_EMAIL_DOMAIN } from "./constants";
+import { ADMIN_EMAIL_DOMAIN, SETTINGS_DEFAULTS } from "./constants";
 import { startOfRange, startOfDay, toNum } from "./format";
+import { machineFund } from "./pricing";
 import { optimizeImage, slug } from "./utils";
 import type {
+  Accessory,
   ContactRequest,
   ContactRequestStatus,
   Customer,
   CustomerWithStats,
   DashboardData,
+  FilamentColor,
   Order,
+  OrderAccessory,
   OrderStatus,
   Product,
   Profile,
@@ -90,9 +94,13 @@ const mapOrder = (row: Record<string, unknown>): Order => ({
   status: (row.status as OrderStatus) ?? "pendiente",
   total: money(row.total),
   estimated_profit: money(row.estimated_profit),
+  machine_fund: money(row.machine_fund),
   order_date: String(row.order_date ?? ""),
   estimated_delivery: (row.estimated_delivery as string) ?? null,
   payment_method: (row.payment_method as string) ?? null,
+  transport_type: (row.transport_type as string) ?? null,
+  delivery_address: (row.delivery_address as string) ?? null,
+  transport_cost: money(row.transport_cost),
   notes: (row.notes as string) ?? null,
   created_by: (row.created_by as string) ?? null,
   updated_by: (row.updated_by as string) ?? null,
@@ -111,6 +119,7 @@ const mapOrder = (row: Record<string, unknown>): Order => ({
           unit_price: money(it.unit_price),
           production_cost: it.production_cost != null ? money(it.production_cost) : null,
           total: money(it.total),
+          colors: Array.isArray(it.colors) ? (it.colors as string[]) : [],
         };
       })
     : undefined,
@@ -125,6 +134,20 @@ const mapOrder = (row: Record<string, unknown>): Order => ({
         };
       })
     : undefined,
+  accessories: Array.isArray(row.accessories)
+    ? (row.accessories as unknown[]).map((a) => {
+        const acc = a as Record<string, unknown>;
+        return {
+          id: String(acc.id),
+          order_id: String(acc.order_id),
+          accessory_id: (acc.accessory_id as string) ?? null,
+          name: String(acc.name ?? ""),
+          quantity: toNum(acc.quantity, 1),
+          unit_price: money(acc.unit_price),
+          total: money(acc.total),
+        };
+      })
+    : undefined,
 });
 
 export type NewOrderItem = {
@@ -133,6 +156,14 @@ export type NewOrderItem = {
   quantity: number;
   unit_price: number;
   production_cost: number | null;
+  colors: string[];
+};
+
+export type NewOrderAccessory = {
+  accessory_id: string | null;
+  name: string;
+  quantity: number;
+  unit_price: number;
 };
 
 export type NewOrderInput = {
@@ -141,8 +172,12 @@ export type NewOrderInput = {
   order_date: string;
   estimated_delivery: string | null;
   payment_method: string | null;
+  transport_type: string | null;
+  delivery_address: string | null;
+  transport_cost: number;
   notes: string | null;
   items: NewOrderItem[];
+  accessories: NewOrderAccessory[];
 };
 
 /* ============ ORDENES ============ */
@@ -161,7 +196,7 @@ export async function fetchOrder(key: string): Promise<Order | null> {
   const isNumber = /^\d+$/.test(key.trim());
   const base = createClient()
     .from("orders")
-    .select("*, customer:customers(*), items:order_items(*), images:order_images(*)");
+    .select("*, customer:customers(*), items:order_items(*), images:order_images(*), accessories:order_accessories(*)");
 
   const { data, error } = isNumber
     ? await base.eq("number", toNum(key)).maybeSingle()
@@ -182,10 +217,23 @@ export async function createOrder(input: NewOrderInput): Promise<Order> {
       total: Math.round(i.quantity * i.unit_price * 100) / 100,
     }));
 
-  const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
+  const accessories = input.accessories
+    .filter((a) => a.quantity > 0 && a.unit_price >= 0)
+    .map((a) => ({
+      ...a,
+      total: Math.round(a.quantity * a.unit_price * 100) / 100,
+    }));
+
+  const transportCost = Math.round(money(input.transport_cost) * 100) / 100;
+  const itemsTotal = items.reduce((s, i) => s + i.total, 0);
+  const accessoriesTotal = accessories.reduce((s, a) => s + a.total, 0);
+  const total = Math.round((itemsTotal + accessoriesTotal + transportCost) * 100) / 100;
   const estimatedProfit = Math.round(
     items.reduce((s, i) => s + (i.unit_price - (i.production_cost ?? 0)) * i.quantity, 0) * 100
   ) / 100;
+
+  const settings = await fetchSettings();
+  const machineFundValue = machineFund(estimatedProfit, settings);
 
   const { data: order, error } = await createClient()
     .from("orders")
@@ -194,9 +242,13 @@ export async function createOrder(input: NewOrderInput): Promise<Order> {
       status: input.status,
       total,
       estimated_profit: estimatedProfit,
+      machine_fund: machineFundValue,
       order_date: input.order_date,
       estimated_delivery: input.estimated_delivery || null,
       payment_method: input.payment_method || null,
+      transport_type: input.transport_type || null,
+      delivery_address: input.delivery_address || null,
+      transport_cost: transportCost,
       notes: input.notes || null,
       created_by: user.id,
       updated_by: user.id,
@@ -215,8 +267,21 @@ export async function createOrder(input: NewOrderInput): Promise<Order> {
       unit_price: item.unit_price,
       production_cost: item.production_cost,
       total: item.total,
+      colors: item.colors ?? [],
     });
     if (itemError) throw new Error("No se pudieron guardar los productos del pedido.");
+  }
+
+  for (const acc of accessories) {
+    const { error: accError } = await createClient().from("order_accessories").insert({
+      order_id: order.id,
+      accessory_id: acc.accessory_id,
+      name: acc.name,
+      quantity: acc.quantity,
+      unit_price: acc.unit_price,
+      total: acc.total,
+    });
+    if (accError) throw new Error("No se pudieron guardar los accesorios del pedido.");
   }
 
   return (await fetchOrder(String(order.id)))!;
@@ -249,6 +314,93 @@ export async function updateOrderMeta(
   if (error) throw new Error("No se pudo actualizar el pedido.");
 }
 
+export type OrderFullInput = NewOrderInput;
+
+/** Actualiza TODO el pedido: metadatos, ítems, accesorios y totales. */
+export async function updateOrderFull(orderId: string, input: OrderFullInput): Promise<void> {
+  const user = await currentUser();
+  if (!user) throw new Error("Sesión no válida.");
+
+  const items = input.items
+    .filter((i) => i.quantity > 0 && i.unit_price >= 0)
+    .map((i) => ({
+      ...i,
+      total: Math.round(i.quantity * i.unit_price * 100) / 100,
+      colors: i.colors ?? [],
+    }));
+
+  const accessories = input.accessories
+    .filter((a) => a.quantity > 0 && a.unit_price >= 0)
+    .map((a) => ({
+      ...a,
+      total: Math.round(a.quantity * a.unit_price * 100) / 100,
+    }));
+
+  const transportCost = Math.round(money(input.transport_cost) * 100) / 100;
+  const itemsTotal = items.reduce((s, i) => s + i.total, 0);
+  const accessoriesTotal = accessories.reduce((s, a) => s + a.total, 0);
+  const total = Math.round((itemsTotal + accessoriesTotal + transportCost) * 100) / 100;
+  const estimatedProfit = Math.round(
+    items.reduce((s, i) => s + (i.unit_price - (i.production_cost ?? 0)) * i.quantity, 0) * 100
+  ) / 100;
+
+  const settings = await fetchSettings();
+  const machineFundValue = machineFund(estimatedProfit, settings);
+
+  const { error: orderError } = await createClient()
+    .from("orders")
+    .update({
+      status: input.status,
+      customer_id: input.customer_id,
+      total,
+      estimated_profit: estimatedProfit,
+      machine_fund: machineFundValue,
+      order_date: input.order_date,
+      estimated_delivery: input.estimated_delivery || null,
+      payment_method: input.payment_method || null,
+      transport_type: input.transport_type || null,
+      delivery_address: input.delivery_address || null,
+      transport_cost: transportCost,
+      notes: input.notes || null,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId);
+  if (orderError) throw new Error("No se pudo actualizar el pedido.");
+
+  const { error: delItems } = await createClient().from("order_items").delete().eq("order_id", orderId);
+  if (delItems) throw new Error("No se pudieron actualizar los productos.");
+
+  for (const item of items) {
+    const { error: itemError } = await createClient().from("order_items").insert({
+      order_id: orderId,
+      product_id: item.product_id,
+      name: item.name,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      production_cost: item.production_cost,
+      total: item.total,
+      colors: item.colors,
+    });
+    if (itemError) throw new Error("No se pudieron guardar los productos del pedido.");
+  }
+
+  const { error: delAcc } = await createClient().from("order_accessories").delete().eq("order_id", orderId);
+  if (delAcc) throw new Error("No se pudieron actualizar los accesorios.");
+
+  for (const acc of accessories) {
+    const { error: accError } = await createClient().from("order_accessories").insert({
+      order_id: orderId,
+      accessory_id: acc.accessory_id,
+      name: acc.name,
+      quantity: acc.quantity,
+      unit_price: acc.unit_price,
+      total: acc.total,
+    });
+    if (accError) throw new Error("No se pudieron guardar los accesorios del pedido.");
+  }
+}
+
 export async function deleteOrder(orderId: string): Promise<void> {
   const { error } = await createClient().from("orders").delete().eq("id", orderId);
   if (error) throw new Error("No se pudo eliminar el pedido.");
@@ -278,6 +430,81 @@ export async function removeOrderImage(image: { id: string; url: string }): Prom
     .delete()
     .eq("id", image.id);
   if (error) throw new Error("No se pudo eliminar la imagen.");
+}
+
+/* ============ COLORES DE FILAMENTO ============ */
+
+const mapColor = (row: Record<string, unknown>): FilamentColor => ({
+  id: String(row.id),
+  name: String(row.name ?? ""),
+  hex: (row.hex as string) ?? null,
+  is_active: Boolean(row.is_active),
+  created_at: String(row.created_at ?? ""),
+});
+
+export async function fetchFilamentColors(): Promise<FilamentColor[]> {
+  const { data, error } = await createClient().from("filament_colors").select("*").order("name");
+  if (error) throw new Error("No se pudieron cargar los colores.");
+  return (data ?? []).map((r: Record<string, unknown>) => mapColor(r));
+}
+
+export async function createFilamentColor(name: string, hex?: string): Promise<void> {
+  const { error } = await createClient()
+    .from("filament_colors")
+    .insert({ name: name.trim(), hex: hex?.trim() || null });
+  if (error) throw new Error("No se pudo crear el color (¿ya existe?).");
+}
+
+export async function deleteFilamentColor(id: string): Promise<void> {
+  const { error } = await createClient().from("filament_colors").delete().eq("id", id);
+  if (error) throw new Error("No se pudo eliminar el color.");
+}
+
+/* ============ ACCESORIOS ============ */
+
+const mapAccessory = (row: Record<string, unknown>): Accessory => ({
+  id: String(row.id),
+  name: String(row.name ?? ""),
+  price: money(row.price),
+  cost: money(row.cost),
+  is_active: Boolean(row.is_active),
+  created_at: String(row.created_at ?? ""),
+  updated_at: String(row.updated_at ?? ""),
+});
+
+export async function fetchAccessories(): Promise<Accessory[]> {
+  const { data, error } = await createClient().from("accessories").select("*").order("name");
+  if (error) throw new Error("No se pudieron cargar los accesorios.");
+  return (data ?? []).map((r: Record<string, unknown>) => mapAccessory(r));
+}
+
+export async function createAccessory(input: { name: string; price: number; cost?: number }): Promise<void> {
+  const { error } = await createClient()
+    .from("accessories")
+    .insert({
+      name: input.name.trim(),
+      price: money(input.price),
+      cost: money(input.cost ?? 0),
+    });
+  if (error) throw new Error("No se pudo crear el accesorio (¿ya existe?).");
+}
+
+export async function updateAccessory(id: string, input: { name: string; price: number; cost?: number }): Promise<void> {
+  const { error } = await createClient()
+    .from("accessories")
+    .update({
+      name: input.name.trim(),
+      price: money(input.price),
+      cost: money(input.cost ?? 0),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+  if (error) throw new Error("No se pudo actualizar el accesorio.");
+}
+
+export async function deleteAccessory(id: string): Promise<void> {
+  const { error } = await createClient().from("accessories").delete().eq("id", id);
+  if (error) throw new Error("No se pudo eliminar el accesorio.");
 }
 
 /* ============ CLIENTES ============ */
@@ -488,7 +715,7 @@ export async function removeProductImage(image: { id: string; url: string }): Pr
 export async function fetchSettings(): Promise<SettingsRecord> {
   const { data, error } = await createClient().from("settings").select("key,value");
   if (error) throw new Error("No se pudieron cargar los ajustes.");
-  const out: SettingsRecord = {};
+  const out: SettingsRecord = { ...SETTINGS_DEFAULTS };
   for (const row of data ?? []) {
     out[row.key] = toNum(row.value);
   }
@@ -532,12 +759,14 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   let month_sales = 0;
   let month_profit = 0;
+  let month_machine_fund = 0;
 
   for (const o of orders) {
     counts[o.status] = (counts[o.status] ?? 0) + 1;
     if (o.order_date.startsWith(monthPrefix) && !NON_REVENUE.has(o.status)) {
       month_sales += o.total;
       month_profit += o.estimated_profit;
+      month_machine_fund += o.machine_fund;
     }
   }
 
@@ -545,6 +774,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     counts,
     month_sales,
     month_profit,
+    month_machine_fund,
     customers_count: customers.length,
     products_count: products.filter((p) => p.is_active).length,
     recent_orders: orders.slice(0, 6),
@@ -587,6 +817,7 @@ export async function fetchStatistics(
             unit_price: 0,
             production_cost: null,
             total: 0,
+            colors: Array.isArray(it.colors) ? (it.colors as string[]) : [],
           };
         })
       : [];
@@ -597,6 +828,7 @@ export async function fetchStatistics(
 
   const sales = Math.round(active.reduce((s, o) => s + o.total, 0) * 100) / 100;
   const profit = Math.round(active.reduce((s, o) => s + o.estimated_profit, 0) * 100) / 100;
+  const machineFundTotal = Math.round(active.reduce((s, o) => s + o.machine_fund, 0) * 100) / 100;
   const products_sold = active.reduce(
     (s, o) => s + (o.items ?? []).reduce((si, it) => si + it.quantity, 0),
     0
@@ -614,6 +846,7 @@ export async function fetchStatistics(
   return {
     sales,
     profit,
+    machine_fund: machineFundTotal,
     orders_count: orderList.length,
     products_sold,
     new_customers: customers?.length ?? 0,

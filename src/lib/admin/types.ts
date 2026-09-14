@@ -41,7 +41,37 @@ export interface OrderItem {
   unit_price: number;
   production_cost: number | null;
   total: number;
+  colors: string[];
   created_at?: string;
+}
+
+export interface OrderAccessory {
+  id: string;
+  order_id: string;
+  accessory_id: string | null;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  created_at?: string;
+}
+
+export interface FilamentColor {
+  id: string;
+  name: string;
+  hex: string | null;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface Accessory {
+  id: string;
+  name: string;
+  price: number;
+  cost: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface OrderImage {
@@ -59,9 +89,13 @@ export interface Order {
   status: OrderStatus;
   total: number;
   estimated_profit: number;
+  machine_fund: number;
   order_date: string;
   estimated_delivery: string | null;
   payment_method: string | null;
+  transport_type: string | null;
+  delivery_address: string | null;
+  transport_cost: number;
   notes: string | null;
   created_by: string | null;
   updated_by: string | null;
@@ -70,6 +104,7 @@ export interface Order {
   customer?: Pick<Customer, "id" | "name" | "whatsapp"> | null;
   items?: OrderItem[];
   images?: OrderImage[];
+  accessories?: OrderAccessory[];
 }
 
 export interface ProductImage {
@@ -123,6 +158,7 @@ export interface DashboardData {
   };
   month_sales: number;
   month_profit: number;
+  month_machine_fund: number;
   customers_count: number;
   products_count: number;
   recent_orders: Order[];
@@ -131,6 +167,7 @@ export interface DashboardData {
 export interface StatisticsData {
   sales: number;
   profit: number;
+  machine_fund: number;
   orders_count: number;
   products_sold: number;
   new_customers: number;

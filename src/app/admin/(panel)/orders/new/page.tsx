@@ -3,11 +3,23 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
-import { createCustomer, createOrder, fetchCustomers, fetchProducts, type NewOrderInput } from "@/lib/admin/api";
-import { PAYMENT_METHODS, STATUSES } from "@/lib/admin/constants";
+import {
+  createCustomer,
+  createOrder,
+  fetchAccessories,
+  fetchCustomers,
+  fetchFilamentColors,
+  fetchProducts,
+  fetchSettings,
+  type NewOrderInput,
+} from "@/lib/admin/api";
+import { PAYMENT_METHODS, STATUSES, TRANSPORT_TYPES } from "@/lib/admin/constants";
 import { formatMoney, toNum } from "@/lib/admin/format";
-import type { Customer, OrderStatus, Product } from "@/lib/admin/types";
+import { discountedPrice, discountPercent, machineFund, netProfit } from "@/lib/admin/pricing";
+import type { Accessory, Customer, FilamentColor, OrderStatus, Product, SettingsRecord } from "@/lib/admin/types";
 import { createId } from "@/lib/admin/utils";
+import { AccessoryPicker } from "@/components/admin/AccessoryPicker";
+import { ColorPicker } from "@/components/admin/ColorPicker";
 import { Btn, Card, ConfirmDialog, Field, Input, InputMoney, LoadingBlock, Modal, SelectBox, TextArea } from "@/components/admin/ui";
 
 type RowItem = {
@@ -17,6 +29,7 @@ type RowItem = {
   quantity: string;
   unit_price: string;
   production_cost: string;
+  colors: string[];
 };
 
 const today = (): string => {
@@ -31,6 +44,9 @@ export default function NewOrderPage() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [colors, setColors] = useState<FilamentColor[]>([]);
+  const [accessories, setAccessories] = useState<Accessory[]>([]);
+  const [settings, setSettings] = useState<SettingsRecord>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -40,21 +56,29 @@ export default function NewOrderPage() {
   const [orderDate, setOrderDate] = useState(today);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [transportType, setTransportType] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [transportCost, setTransportCost] = useState("");
   const [notes, setNotes] = useState("");
 
   const [items, setItems] = useState<RowItem[]>([
-    { key: createId(), product_id: null, name: "", quantity: "1", unit_price: "", production_cost: "" },
+    { key: createId(), product_id: null, name: "", quantity: "1", unit_price: "", production_cost: "", colors: [] },
   ]);
+
+  const [accessoryQtys, setAccessoryQtys] = useState<Record<string, number>>({});
 
   const [customerModal, setCustomerModal] = useState(false);
   const [customerForm, setCustomerForm] = useState({ name: "", whatsapp: "", email: "", address: "", notes: "" });
   const [customerSaving, setCustomerSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchCustomers(), fetchProducts()])
-      .then(([c, p]) => {
+    Promise.all([fetchCustomers(), fetchProducts(), fetchFilamentColors(), fetchAccessories(), fetchSettings()])
+      .then(([c, p, cl, ac, s]) => {
         setCustomers(c);
         setProducts(p);
+        setColors(cl);
+        setAccessories(ac);
+        setSettings(s);
         if (c.length === 1) setCustomerId(c[0].id);
       })
       .catch((e) => setError(e.message))
@@ -72,26 +96,52 @@ export default function NewOrderPage() {
 
   const onSelectProduct = (key: string, productId: string) => {
     const p = productById.get(productId);
+    const qty = toNum(items.find((i) => i.key === key)?.quantity ?? "1", 1);
+    const price = p ? discountedPrice(qty, p.sale_price ?? 0, p.production_cost, settings) : 0;
     updateItem(key, {
       product_id: productId || null,
       name: p ? p.name : "",
-      unit_price: p ? String(p.sale_price ?? "") : "",
+      unit_price: p ? String(price) : "",
       production_cost: p ? String(p.production_cost ?? "") : "",
+      colors: [],
     });
+  };
+
+  const onQtyChange = (item: RowItem, value: string) => {
+    updateItem(item.key, { quantity: value });
+    const p = item.product_id ? productById.get(item.product_id) : undefined;
+    if (p) {
+      const price = discountedPrice(toNum(value, 1), p.sale_price ?? 0, p.production_cost, settings);
+      updateItem(item.key, { unit_price: String(price) });
+    }
   };
 
   const addRow = () => setItems((prev) => [
     ...prev,
-    { key: createId(), product_id: null, name: "", quantity: "1", unit_price: "", production_cost: "" },
+    { key: createId(), product_id: null, name: "", quantity: "1", unit_price: "", production_cost: "", colors: [] },
   ]);
 
   const removeRow = (key: string) => {
     if (items.length === 1) {
-      setItems([{ key: createId(), product_id: null, name: "", quantity: "1", unit_price: "", production_cost: "" }]);
+      setItems([{ key: createId(), product_id: null, name: "", quantity: "1", unit_price: "", production_cost: "", colors: [] }]);
       return;
     }
     setItems((prev) => prev.filter((i) => i.key !== key));
   };
+
+  const toggleColor = (key: string, name: string) => {
+    setItems((prev) => prev.map((i) => {
+      if (i.key !== key) return i;
+      const has = i.colors.includes(name);
+      return { ...i, colors: has ? i.colors.filter((c) => c !== name) : [...i.colors, name] };
+    }));
+  };
+
+  const accessoryById = useMemo(() => {
+    const m = new Map<string, Accessory>();
+    for (const a of accessories) m.set(a.id, a);
+    return m;
+  }, [accessories]);
 
   const totals = useMemo(() => {
     const rows = items.map((i) => {
@@ -100,12 +150,24 @@ export default function NewOrderPage() {
       const cost = money(i.production_cost);
       return { qty, price, cost, line: qty * price, profit: qty * (price - cost) };
     });
+    const accRows = Object.entries(accessoryQtys).map(([id, qty]) => {
+      const a = accessoryById.get(id);
+      return { qty, price: a?.price ?? 0, line: qty * (a?.price ?? 0) };
+    });
+    const transport = money(transportCost);
+    const profit = rows.reduce((s, r) => s + r.profit, 0);
     return {
       count: rows.reduce((s, r) => s + r.qty, 0),
       total: rows.reduce((s, r) => s + r.line, 0),
-      profit: rows.reduce((s, r) => s + r.profit, 0),
+      profit,
+      mf: machineFund(profit, settings),
+      net: netProfit(profit, settings),
+      accQty: accRows.reduce((s, r) => s + r.qty, 0),
+      accTotal: accRows.reduce((s, r) => s + r.line, 0),
+      transport,
+      grand: rows.reduce((s, r) => s + r.line, 0) + accRows.reduce((s, r) => s + r.line, 0) + money(transportCost),
     };
-  }, [items]);
+  }, [items, accessoryQtys, accessoryById, transportCost, settings]);
 
   const onSaveCustomer = async (e: FormEvent) => {
     e.preventDefault();
@@ -144,6 +206,7 @@ export default function NewOrderPage() {
         quantity: toNum(i.quantity),
         unit_price: money(i.unit_price),
         production_cost: i.production_cost.trim() !== "" ? money(i.production_cost) : null,
+        colors: i.colors,
       }));
     if (cleanItems.length === 0) {
       setError("Agrega al menos un producto con cantidad.");
@@ -154,6 +217,19 @@ export default function NewOrderPage() {
       return;
     }
 
+    const cleanAccessories = Object.entries(accessoryQtys)
+      .filter(([, qty]) => qty > 0)
+      .map(([id, qty]) => {
+        const a = accessoryById.get(id);
+        return {
+          accessory_id: id,
+          name: a?.name ?? "",
+          quantity: qty,
+          unit_price: a?.price ?? 0,
+        };
+      })
+      .filter((a) => a.name);
+
     setSaving(true);
     setError("");
     try {
@@ -163,8 +239,12 @@ export default function NewOrderPage() {
         order_date: orderDate || today(),
         estimated_delivery: deliveryDate || null,
         payment_method: paymentMethod || null,
+        transport_type: transportType || null,
+        delivery_address: deliveryAddress.trim() || null,
+        transport_cost: money(transportCost),
         notes: notes.trim() || null,
         items: cleanItems,
+        accessories: cleanAccessories,
       };
       const order = await createOrder(input);
       router.push(`/admin/orders/${order.id}`);
@@ -224,40 +304,60 @@ export default function NewOrderPage() {
           }
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="tier-info">
+              El precio se calcula solo por cantidad:
+              <strong> 1–20</strong> y <strong>{settings.discount_20}% </strong>(21–50) ·{" "}
+              <strong>{settings.discount_50}%</strong> (51–100) · <strong>{settings.discount_100}%</strong> (101+).
+              {" "}Nunca baja del <strong>{settings.min_margin}%</strong> de ganancia.
+            </div>
             {items.map((item) => {
               const line = toNum(item.quantity) * money(item.unit_price);
+              const catalog = item.product_id ? productById.get(item.product_id) : undefined;
+              const base = catalog?.sale_price ?? 0;
+              const disc = catalog ? discountPercent(toNum(item.quantity, 1), settings) : 0;
               return (
-                <div className="line-item" key={item.key}>
-                  <SelectBox value={item.product_id ?? ""} onChange={(e) => onSelectProduct(item.key, e.target.value)}>
-                    <option value="">Producto de catálogo…</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </SelectBox>
-                  <Input
-                    placeholder="Nombre"
-                    value={item.name}
-                    onChange={(e) => updateItem(item.key, { name: e.target.value })}
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="Cant."
-                    value={item.quantity}
-                    onChange={(e) => updateItem(item.key, { quantity: e.target.value })}
-                  />
-                  <InputMoney
-                    placeholder="Precio unit."
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={item.unit_price}
-                    onChange={(e) => updateItem(item.key, { unit_price: e.target.value })}
-                  />
-                  <span className="line-item-total">₡{formatMoney(line)}</span>
-                  <button type="button" className="icon-btn danger line-item-remove" onClick={() => removeRow(item.key)} title="Quitar">
-                    <Trash2 />
-                  </button>
+                <div className="line-item-card" key={item.key}>
+                  <div className="line-item">
+                    <SelectBox value={item.product_id ?? ""} onChange={(e) => onSelectProduct(item.key, e.target.value)}>
+                      <option value="">Producto de catálogo…</option>
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </SelectBox>
+                    <Input
+                      placeholder="Nombre"
+                      value={item.name}
+                      onChange={(e) => updateItem(item.key, { name: e.target.value })}
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="Cant."
+                      value={item.quantity}
+                      onChange={(e) => onQtyChange(item, e.target.value)}
+                    />
+                    <InputMoney
+                      placeholder="Precio unit."
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={item.unit_price}
+                      onChange={(e) => updateItem(item.key, { unit_price: e.target.value })}
+                    />
+                    <span className="line-item-total">₡{formatMoney(line)}</span>
+                    <button type="button" className="icon-btn danger line-item-remove" onClick={() => removeRow(item.key)} title="Quitar">
+                      <Trash2 />
+                    </button>
+                  </div>
+                  <div className="line-item-colors">
+                    <span className="line-item-colors-label">Colores</span>
+                    <ColorPicker colors={colors} selected={item.colors} onToggle={(name) => toggleColor(item.key, name)} />
+                  </div>
+                  {catalog && base > 0 && disc > 0 && (
+                    <p className="line-item-price-info">
+                      Precio base ₡{formatMoney(base)} · descuento de {disc}% por cantidad
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -266,6 +366,70 @@ export default function NewOrderPage() {
               <span className="label">Total productos</span>
               <span className="value">₡{formatMoney(totals.total)}</span>
             </div>
+            {totals.accTotal > 0 && (
+              <div className="order-summary-row">
+                <span className="label">Accesorios ({totals.accQty})</span>
+                <span className="value">₡{formatMoney(totals.accTotal)}</span>
+              </div>
+            )}
+            {totals.transport > 0 && (
+              <div className="order-summary-row">
+                <span className="label">Transporte {transportType ? `— ${transportType}` : ""}</span>
+                <span className="value">₡{formatMoney(totals.transport)}</span>
+              </div>
+            )}
+            <div className="order-summary-row">
+              <span className="label">Ganancia estimada</span>
+              <span className="value" style={{ color: "#4ade80" }}>₡{formatMoney(totals.profit)}</span>
+            </div>
+            <div className="order-summary-row">
+              <span className="label">Fondo de maquinaria ({settings.machine_fund_percent}%)</span>
+              <span className="value" style={{ color: "#f59e0b" }}>−₡{formatMoney(totals.mf)}</span>
+            </div>
+            <div className="order-summary-row">
+              <span className="label">Ganancia neta</span>
+              <span className="value" style={{ color: "#4ade80" }}>₡{formatMoney(totals.net)}</span>
+            </div>
+            <div className="order-summary-row order-total-final">
+              <span className="label">Total</span>
+              <span className="value">₡{formatMoney(totals.grand)}</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card
+          title="Accesorios"
+          actions={<span className="table-muted">{totals.accQty > 0 ? `${totals.accQty} artículos` : "opcional"}</span>}
+        >
+          <AccessoryPicker accessories={accessories} value={accessoryQtys} onChange={setAccessoryQtys} />
+        </Card>
+
+        <Card title="Envío y entrega">
+          <div className="field-grid">
+            <Field label="Transporte">
+              <SelectBox value={transportType} onChange={(e) => setTransportType(e.target.value)}>
+                <option value="">Sin definir</option>
+                {TRANSPORT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </SelectBox>
+            </Field>
+            <Field label="Costo de transporte">
+              <InputMoney
+                type="number"
+                min={0}
+                step="0.01"
+                value={transportCost}
+                onChange={(e) => setTransportCost(e.target.value)}
+              />
+            </Field>
+            <Field label="Dirección de entrega" hint="Omitir si es recogida en tienda">
+              <Input
+                placeholder="Provincia, cantón, señas…"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+              />
+            </Field>
           </div>
         </Card>
 
