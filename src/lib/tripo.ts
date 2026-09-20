@@ -1,6 +1,6 @@
 const BASES = [
-  process.env.TRIPO_BASE_URL ?? "https://openapi.tripo3d.com/v3",
-  "https://openapi.tripo3d.ai/v3",
+  process.env.TRIPO_BASE_URL ?? "https://openapi.tripo3d.ai/v3",
+  "https://openapi.tripo3d.com/v3",
 ];
 
 type TripoData = Record<string, unknown>;
@@ -33,7 +33,8 @@ async function tripo(path: string, init?: RequestInit): Promise<TripoData> {
     } catch (err) {
       lastErr = err;
       const status = (err as { status?: number }).status;
-      if (status && status !== 404 && status !== 405 && status !== 502 && status !== 503) break;
+      if (status && status < 401) break;
+      if (status === 429 || status === 400) break;
     }
   }
   throw lastErr;
