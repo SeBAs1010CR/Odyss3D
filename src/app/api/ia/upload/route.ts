@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { tripoUploadImage } from "@/lib/tripo";
+import { requireUser } from "@/lib/supabase/auth";
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,10 @@ const MAX_BYTES = 20 * 1024 * 1024;
 const MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request: Request) {
+  const user = await requireUser();
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const form = await request.formData();
     const file = form.get("file");

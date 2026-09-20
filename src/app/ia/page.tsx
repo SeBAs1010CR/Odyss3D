@@ -1,10 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { Box, Download, ImagePlus, Loader2, RefreshCw } from "lucide-react";
+import { currentUser } from "@/lib/admin/api";
+import { LoadingBlock } from "@/components/admin/ui";
 import "./ia.css";
 
 const ModelViewer = dynamic(() => import("../../components/ModelViewer"), { ssr: false });
@@ -16,7 +19,9 @@ type Status = "idle" | "uploading" | "generating" | "done" | "error";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function Ia() {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [ready, setReady] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [status, setStatus] = useState<Status>("idle");
@@ -25,6 +30,21 @@ export default function Ia() {
   const [error, setError] = useState("");
   const [taskId, setTaskId] = useState("");
   const [downloading, setDownloading] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const user = await currentUser();
+      if (!user) {
+        router.replace("/admin/login");
+        return;
+      }
+      if (mounted) setReady(true);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -114,6 +134,14 @@ export default function Ia() {
       setDownloading("");
     }
   };
+
+  if (!ready) {
+    return (
+      <main>
+        <LoadingBlock />
+      </main>
+    );
+  }
 
   return (
     <>

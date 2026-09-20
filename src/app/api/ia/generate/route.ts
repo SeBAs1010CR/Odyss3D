@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { tripoCreateImageTask } from "@/lib/tripo";
+import { requireUser } from "@/lib/supabase/auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const user = await requireUser();
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const body = await request.json().catch(() => ({}));
     const fileToken = body.file_token;

@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { tripoGetTask, tripoFetchBytes } from "@/lib/tripo";
+import { requireUser } from "@/lib/supabase/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  const user = await requireUser();
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const taskId = new URL(request.url).searchParams.get("task_id");
     if (!taskId) {

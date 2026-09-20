@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { tripoGetTask, tripoEnsureConversion, tripoWaitTask, tripoFetchBytes } from "@/lib/tripo";
+import { requireUser } from "@/lib/supabase/auth";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,10 @@ const FORMATS: Record<string, { ext: string; type: string }> = {
 };
 
 export async function POST(request: Request) {
+  const user = await requireUser();
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const body = await request.json().catch(() => ({}));
     const taskId = typeof body.task_id === "string" ? body.task_id : "";
