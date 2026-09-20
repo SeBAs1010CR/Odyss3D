@@ -53,7 +53,10 @@ export async function tripoCreateImageTask(fileToken: string): Promise<string> {
   const data = await tripo("/generation/image-to-model", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ input: fileToken }),
+    body: JSON.stringify({
+      input: fileToken,
+      model: process.env.TRIPO_MODEL ?? "v3.1-20260211",
+    }),
   });
   const id = (data.task_id as string) ?? (data.id as string);
   if (!id) throw new Error("Tripo no devolvió un task_id.");
