@@ -1,13 +1,20 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { Save } from "lucide-react";
-import { createProduct, updateProduct, type ProductInput } from "@/lib/admin/api";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Save, Sparkles } from "lucide-react";
+import {
+  createProduct,
+  fetchFilamentColors,
+  updateProduct,
+  type ProductInput,
+} from "@/lib/admin/api";
 import { PRODUCT_CATEGORIES } from "@/lib/admin/constants";
 import { toNum } from "@/lib/admin/format";
-import type { Product } from "@/lib/admin/types";
+import { computeProductPricing, type ProductPricingResult } from "@/lib/admin/productAutoPricing";
+import type { FilamentColor, Product } from "@/lib/admin/types";
 import { createId } from "@/lib/admin/utils";
 import { Btn, Card, Field, Input, InputMoney, TextArea } from "@/components/admin/ui";
+import { ColorPicker } from "@/components/admin/ColorPicker";
 
 export function ProductForm({
   product,
@@ -26,10 +33,48 @@ export function ProductForm({
     sale_price: product?.sale_price != null ? String(product.sale_price) : "",
     is_active: product?.is_active ?? true,
     is_ecommerce: product?.is_ecommerce ?? false,
-    colors: (product?.colors ?? []).join(", "),
+    colors: [...(product?.colors ?? [])],
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [colorInput, setColorInput] = useState("");
+  const [colorsList, setColorsList] = useState<FilamentColor[]>([]);
+  const [pricing, setPricing] = useState<ProductPricingResult | null>(null);
+
+  useEffect(() => {
+    fetchFilamentColors().then(setColorsList).catch(() => setColorsList([]));
+  }, []);
+
+  const applyPricing = useCallback((r: ProductPricingResult) => {
+    setForm((f) => ({
+      ...f,
+      production_cost: String(Math.round(r.productionCost)),
+      sale_price: String(r.salePrice),
+    }));
+  }, []);
+
+  useEffect(() => {
+    const r = computeProductPricing(form.grams, form.print_minutes);
+    setPricing(r);
+    if (r && !product) applyPricing(r);
+  }, [form.grams, form.print_minutes, product, applyPricing]);
+
+  const toggleColor = (name: string) =>
+    setForm((f) => ({
+      ...f,
+      colors: f.colors.includes(name)
+        ? f.colors.filter((c) => c !== name)
+        : [...f.colors, name],
+    }));
+
+  const addCustomColor = () => {
+    const name = colorInput.trim();
+    if (!name) return;
+    setForm((f) =>
+      f.colors.includes(name) ? f : { ...f, colors: [...f.colors, name] }
+    );
+    setColorInput("");
+  };
 
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -53,10 +98,7 @@ export function ProductForm({
         sale_price: form.sale_price !== "" ? toNum(form.sale_price) : null,
         is_active: form.is_active,
         is_ecommerce: form.is_ecommerce,
-        colors: form.colors
-          .split(",")
-          .map((c) => c.trim())
-          .filter(Boolean),
+        colors: form.colors,
       };
 
       if (product) {
@@ -138,8 +180,27 @@ export function ProductForm({
               step="0.01"
               value={form.production_cost}
               onChange={(e) => set({ production_cost: e.target.value })}
-              placeholder="Ej. 850"
+              placeholder="Se calcula con calc (mín. ₡400)"
             />
+            {pricing && (
+              <div className="field-hint">
+                <Sparkles size={12} style={{ verticalAlign: -2 }} />{" "}
+                Cálculo (calc): costo ₡{Math.round(pricing.productionCost)}
+                {pricing.minCostApplied ? " (mínimo ₡400)" : ""} · venta sugerida ₡
+                {pricing.salePrice} al {pricing.marginPercent}%
+                {pricing.roundingApplied ? " · redondeado" : ""}
+                {product && (
+                  <button
+                    type="button"
+                    className="btn-app btn-app-ghost"
+                    style={{ marginLeft: 8, padding: "3px 8px", fontSize: 11 }}
+                    onClick={() => applyPricing(pricing)}
+                  >
+                    Aplicar
+                  </button>
+                )}
+              </div>
+            )}
           </Field>
 
           <Field label="Precio de venta">
@@ -149,17 +210,33 @@ export function ProductForm({
               step="0.01"
               value={form.sale_price}
               onChange={(e) => set({ sale_price: e.target.value })}
-              placeholder="Ej. 1200"
+              placeholder="Se calcula con calc (redondeo)"
             />
           </Field>
 
-          <Field label="Colores (opcional)">
-            <Input
-              value={form.colors}
-              onChange={(e) => set({ colors: e.target.value })}
-              placeholder="Ej. Negro, Azul, Rojo"
-            />
-            <p className="field-hint">Separados por coma. Se muestran en la tienda.</p>
+          <Field label="Colores (bolas de color)">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <ColorPicker colors={colorsList} selected={form.colors} onToggle={toggleColor} />
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  className="input"
+                  style={{ flex: 1 }}
+                  value={colorInput}
+                  placeholder="Agregar color personalizado…"
+                  onChange={(e) => setColorInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addCustomColor();
+                    }
+                  }}
+                />
+                <button type="button" className="btn-app btn-app-ghost" onClick={addCustomColor}>
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <p className="field-hint">Selecciona los colores para este producto; se muestran como bolas en la tienda.</p>
           </Field>
 
           <Field label="Tienda online">

@@ -1324,31 +1324,49 @@ img {
   margin-bottom: 10px;
 }
 
-.store-color-chips {
+.store-color-balls {
   display: flex;
-  gap: 8px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
-.store-color-chip {
-  padding: 9px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.store-color-ball {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   background: transparent;
-  color: #c9cbd0;
-  font-size: 13px;
+  border: none;
+  padding: 4px 2px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  color: #9a9da4;
 }
 
-.store-color-chip:hover {
-  border-color: rgba(0, 102, 255, 0.5);
+.store-color-ball-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.store-color-chip.active {
-  background: var(--color-blue);
-  border-color: var(--color-blue);
-  color: #fff;
+.store-color-ball:hover .store-color-ball-swatch {
+  transform: translateY(-2px);
+}
+
+.store-color-ball.active .store-color-ball-swatch {
+  box-shadow: 0 0 0 3px #0c0e11, 0 0 0 5px var(--color-blue);
+  transform: translateY(-2px);
+}
+
+.store-color-ball-name {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.store-color-ball.active .store-color-ball-name {
+  color: var(--color-blue);
 }
 
 .store-qty-row {

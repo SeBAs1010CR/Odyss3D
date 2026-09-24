@@ -13,9 +13,11 @@ import { cn } from "@/lib/admin/utils";
 export function ProductDetail({
   product,
   similares,
+  colorHex,
 }: {
   product: StoreProduct;
   similares: StoreProduct[];
+  colorHex: Record<string, string>;
 }) {
   const gallery = product.images.length > 0 ? product.images : product.image ? [product.image] : [];
   const [idx, setIdx] = useState(gallery.length > 0 ? 0 : -1);
@@ -85,24 +87,31 @@ export function ProductDetail({
             {product.colors.length > 0 && (
               <div className="store-colors">
                 <span className="store-label">Color:</span>
-                <div className="store-color-chips">
-                  <button
-                    type="button"
-                    className={cn("store-color-chip", color === null && "active")}
-                    onClick={() => setColor(null)}
-                  >
-                    Predeterminado
-                  </button>
-                  {product.colors.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={cn("store-color-chip", color === c && "active")}
-                      onClick={() => setColor(c)}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                <div className="store-color-balls">
+                  {product.colors.map((c) => {
+                    const hex = colorHex[c];
+                    const active = color === c;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        className={cn("store-color-ball", active && "active")}
+                        onClick={() => setColor(active ? null : c)}
+                        title={c}
+                        aria-pressed={active}
+                      >
+                        <span
+                          className="store-color-ball-swatch"
+                          style={
+                            hex
+                              ? { backgroundColor: hex }
+                              : { background: "linear-gradient(135deg,#9ca3af,#6b7280)" }
+                          }
+                        />
+                        <span className="store-color-ball-name">{c}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

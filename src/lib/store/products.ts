@@ -33,6 +33,17 @@ async function resolveImage(
   return data?.signedUrl ?? raw;
 }
 
+/** Mapa nombre color -> hex (de filament_colors) para mostrar bolas de color. */
+export async function listFilamentColorHexMap(): Promise<Record<string, string>> {
+  const supabase = serviceClient();
+  const { data } = await supabase.from("filament_colors").select("name,hex");
+  const out: Record<string, string> = {};
+  for (const row of data ?? []) {
+    if (row?.name) out[row.name] = (row.hex as string) || "";
+  }
+  return out;
+}
+
 /** Catálogo público de la tienda (solo publicados en ecommerce y activos). */
 export async function listStoreProducts(): Promise<StoreProduct[]> {
   const supabase = serviceClient();
