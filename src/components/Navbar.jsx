@@ -41,7 +41,7 @@ export default function Navbar() {
         <div className="container nav-inner">
           <a href="#inicio" className="nav-logo">
             <img
-              src="/images/branding/logo-horizontal.png"
+              src="/images/branding/logo-horizontal.png?v=2"
               alt="ODYSS3D"
               className="nav-logo-img"
             />

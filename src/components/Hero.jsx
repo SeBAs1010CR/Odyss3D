@@ -30,7 +30,7 @@ export default function Hero() {
 
       <div className="container hero-content">
         <motion.img
-          src="/images/branding/logo-horizontal.png"
+          src="/images/branding/logo-horizontal.png?v=2"
           alt="ODYSS3D"
           className="hero-logo"
           {...fadeUp(0.05)}

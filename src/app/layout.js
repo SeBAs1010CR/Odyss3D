@@ -6,7 +6,7 @@ export const metadata = {
   description:
     "Fabricamos tus ideas con impresión 3D, diseño, prototipado y fabricación de precisión. De la pantalla al objeto real.",
   icons: {
-    icon: "/images/branding/logo-icon.png",
+    icon: "/images/branding/logo-icon.png?v=2",
   },
 };
 

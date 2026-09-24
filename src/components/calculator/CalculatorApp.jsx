@@ -70,7 +70,7 @@ function PinScreen({ onUnlock }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
         >
-          <img src="/images/branding/logo-horizontal.png" alt="ODYSS3D" className="pin-logo" />
+          <img src="/images/branding/logo-horizontal.png?v=2" alt="ODYSS3D" className="pin-logo" />
           <span className="pin-kicker">Herramienta interna</span>
           <div className="pin-icon">
             <Icons.Lock size={22} />
@@ -264,7 +264,7 @@ export default function CalculatorApp() {
       <div className="calc-shell">
         <header className="calc-head">
           <motion.div className="calc-head-brand" {...fadeUp(0)}>
-            <img src="/images/branding/logo-horizontal.png" alt="ODYSS3D" className="calc-logo" />
+            <img src="/images/branding/logo-horizontal.png?v=2" alt="ODYSS3D" className="calc-logo" />
             <span className="calc-title">Calculadora de costos</span>
             <span className="calc-badge">Interna</span>
           </motion.div>
