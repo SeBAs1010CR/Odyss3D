@@ -29,18 +29,21 @@ function normalizeProducts(items) {
 
 export default function Products() {
   const [products, setProducts] = useState(() => normalizeProducts(productsData.products || []));
+  const [failed, setFailed] = useState(false);
+
+  const load = () => {
+    setFailed(false);
+    fetch("/api/products")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((data) => {
+        if (Array.isArray(data)) setProducts(normalizeProducts(data));
+      })
+      .catch(() => setFailed(true));
+  };
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/products")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => {
-        if (active && Array.isArray(data)) setProducts(normalizeProducts(data));
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -63,7 +66,27 @@ export default function Products() {
           </motion.div>
         </div>
 
-        {products.length === 0 ? (
+        {failed && products.length === 0 ? (
+          <div className="products-empty">
+            <svg
+              className="products-empty-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+            >
+              <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="9" />
+            </svg>
+            <h3 className="products-empty-title">No se pudo cargar el catálogo</h3>
+            <p className="products-empty-text">
+              Revisa que el servidor tenga configurada SUPABASE_SERVICE_ROLE_KEY e intenta de nuevo.
+            </p>
+            <button type="button" className="btn btn-secondary" onClick={load}>
+              Reintentar
+            </button>
+          </div>
+        ) : products.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
