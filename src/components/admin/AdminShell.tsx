@@ -12,6 +12,7 @@ import {
   Menu,
   Package,
   Settings,
+  Store,
   Users,
 } from "lucide-react";
 import { currentUser, fetchProfile, signOut } from "@/lib/admin/api";
@@ -23,6 +24,7 @@ const NAV = [
   { href: "/admin/orders", label: "Pedidos", icon: Package },
   { href: "/admin/customers", label: "Clientes", icon: Users },
   { href: "/admin/products", label: "Productos", icon: Boxes },
+  { href: "/admin/ecommerce", label: "Ecommerce", icon: Store },
   { href: "/admin/requests", label: "Solicitudes", icon: Inbox },
   { href: "/admin/statistics", label: "Estadísticas", icon: BarChart3 },
   { href: "/admin/settings", label: "Configuración", icon: Settings },
@@ -97,7 +99,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
       <div className="admin-sidebar-brand">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/branding/logo-icon.png"
+          src="/images/branding/logo-icon.png?v=2"
           alt="ODYSS3D"
           className="admin-sidebar-logo"
         />

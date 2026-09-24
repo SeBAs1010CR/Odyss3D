@@ -6,19 +6,36 @@ import productsData from "../data/products.json";
 
 function resolveImage(src) {
   if (!src) return null;
-  if (/^(https?:)?\/\//.test(src)) return src;
+  if (/^(https?:)?\//.test(src)) return src;
   return `/images/products/${src}`;
 }
 
+function normalizeProducts(items) {
+  return (items ?? [])
+    .map((p) => ({
+      id: p.id ?? p.name,
+      name: p.name,
+      category: p.category ?? null,
+      price:
+        p.price ??
+        (p.sale_price != null
+          ? `₡${new Intl.NumberFormat("es-CR").format(Number(p.sale_price) || 0)}`
+          : null),
+      image: p.image ?? null,
+      url: p.url ?? "#contacto",
+    }))
+    .filter((p) => p.name);
+}
+
 export default function Products() {
-  const [products, setProducts] = useState(productsData.products || []);
+  const [products, setProducts] = useState(() => normalizeProducts(productsData.products || []));
 
   useEffect(() => {
     let active = true;
     fetch("/api/products")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
-        if (active && Array.isArray(data)) setProducts(data);
+        if (active && Array.isArray(data)) setProducts(normalizeProducts(data));
       })
       .catch(() => {});
     return () => {

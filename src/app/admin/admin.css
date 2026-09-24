@@ -1425,6 +1425,22 @@
   color: #fff;
 }
 
+.ecommerce-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ecommerce-price-row .input-with-suffix .input {
+  padding-right: 34px;
+}
+
+.ecommerce-price-row .icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 #__next-admin {
   display: contents;
 }

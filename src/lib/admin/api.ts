@@ -942,10 +942,14 @@ export async function resolveSignedUrls(
   bucket: "products" | "orders" | "cotizaciones",
   paths: (string | null | undefined)[]
 ): Promise<Record<string, string>> {
-  const clean = [...new Set(paths.filter((p): p is string => !!p && !/^https?:\/\//.test(p)))];
+  const publicPath = (p: string) =>
+    /^https?:\/\//.test(p) || p.startsWith("/");
+  const clean = [
+    ...new Set(paths.filter((p): p is string => !!p && !publicPath(p))),
+  ];
   const out: Record<string, string> = {};
   for (const p of paths) {
-    if (p && /^https?:\/\//.test(p)) out[p] = p;
+    if (p && publicPath(p)) out[p] = p;
   }
   if (clean.length === 0) return out;
 
