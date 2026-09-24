@@ -674,7 +674,7 @@ export async function createProduct(input: ProductInput, withId?: string): Promi
   return mapProduct(data as Record<string, unknown>);
 }
 
-export async function updateProduct(id: string, input: ProductInput): Promise<void> {
+export async function updateProduct(id: string, input: Partial<ProductInput>): Promise<void> {
   const user = await currentUser();
   const { error } = await createClient()
     .from("products")
