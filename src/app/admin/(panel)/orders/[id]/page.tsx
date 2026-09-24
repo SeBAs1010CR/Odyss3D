@@ -315,7 +315,7 @@ export default function OrderDetailPage() {
               <Field label="Fecha">
                 <Input type="date" value={meta.order_date} onChange={(e) => setMeta({ ...meta, order_date: e.target.value })} />
               </Field>
-              <Field label="Fecha estimada de entrega">
+              <Field label="Fecha de entrega">
                 <Input type="date" value={meta.estimated_delivery} onChange={(e) => setMeta({ ...meta, estimated_delivery: e.target.value })} />
               </Field>
               <Field label="Método de pago">
@@ -511,7 +511,7 @@ export default function OrderDetailPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div className="kv-row"><span>Fecha</span><strong>{formatDate(order.order_date)}</strong></div>
-              <div className="kv-row"><span>Entrega estimada</span><strong>{formatDate(meta.estimated_delivery || order.estimated_delivery)}</strong></div>
+              <div className="kv-row"><span>Fecha de entrega</span><strong>{formatDate(meta.estimated_delivery || order.estimated_delivery)}</strong></div>
               <div className="kv-row"><span>Método de pago</span><strong>{meta.payment_method || "—"}</strong></div>
               <div className="kv-row"><span>Transporte</span><strong>{meta.transport_type || "—"}</strong></div>
               {meta.delivery_address && (

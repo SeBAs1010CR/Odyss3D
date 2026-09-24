@@ -119,6 +119,7 @@ export default function OrdersPage() {
                   <th>Total</th>
                   <th>Estado</th>
                   <th>Fecha</th>
+                  <th>Entrega</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -135,6 +136,7 @@ export default function OrdersPage() {
                     <td className="table-strong">₡{formatMoney(o.total)}</td>
                     <td><StatusBadge status={o.status} /></td>
                     <td className="table-muted">{formatDateShort(o.order_date)}</td>
+                    <td className="table-muted">{o.estimated_delivery ? formatDateShort(o.estimated_delivery) : "—"}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="table-actions">
                         <button className="icon-btn" onClick={() => router.push(`/admin/orders/${o.id}`)} title="Ver">
@@ -166,6 +168,9 @@ export default function OrdersPage() {
                   <span>{o.customer?.name ?? "Sin cliente"}</span>
                   <span>·</span>
                   <span>{formatDateShort(o.order_date)}</span>
+                </div>
+                <div className="mobile-order-card-meta">
+                  <span>Entrega: {o.estimated_delivery ? formatDateShort(o.estimated_delivery) : "—"}</span>
                 </div>
                 <div className="mobile-order-card-meta">{orderSummary(o) || "—"}</div>
                 <div className="table-actions" style={{ justifyContent: "space-between" }}>

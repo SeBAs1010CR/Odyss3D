@@ -445,7 +445,7 @@ export default function NewOrderPage() {
             <Field label="Fecha">
               <Input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
             </Field>
-            <Field label="Fecha estimada de entrega">
+            <Field label="Fecha de entrega">
               <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
             </Field>
             <Field label="Método de pago">
