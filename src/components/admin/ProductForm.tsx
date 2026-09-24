@@ -25,6 +25,8 @@ export function ProductForm({
     production_cost: product?.production_cost != null ? String(product.production_cost) : "",
     sale_price: product?.sale_price != null ? String(product.sale_price) : "",
     is_active: product?.is_active ?? true,
+    is_ecommerce: product?.is_ecommerce ?? false,
+    colors: (product?.colors ?? []).join(", "),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +52,11 @@ export function ProductForm({
         production_cost: form.production_cost !== "" ? toNum(form.production_cost) : null,
         sale_price: form.sale_price !== "" ? toNum(form.sale_price) : null,
         is_active: form.is_active,
+        is_ecommerce: form.is_ecommerce,
+        colors: form.colors
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean),
       };
 
       if (product) {
@@ -144,6 +151,26 @@ export function ProductForm({
               onChange={(e) => set({ sale_price: e.target.value })}
               placeholder="Ej. 1200"
             />
+          </Field>
+
+          <Field label="Colores (opcional)">
+            <Input
+              value={form.colors}
+              onChange={(e) => set({ colors: e.target.value })}
+              placeholder="Ej. Negro, Azul, Rojo"
+            />
+            <p className="field-hint">Separados por coma. Se muestran en la tienda.</p>
+          </Field>
+
+          <Field label="Tienda online">
+            <label className="check-label" style={{ paddingTop: 6 }}>
+              <input
+                type="checkbox"
+                checked={form.is_ecommerce}
+                onChange={(e) => set({ is_ecommerce: e.target.checked })}
+              />
+              {form.is_ecommerce ? "Publicado en la tienda" : "Uso interno (fuera de la tienda)"}
+            </label>
           </Field>
 
           {product && (

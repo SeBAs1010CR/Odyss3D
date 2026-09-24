@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Boxes, Pencil, Plus, Power, Search, Trash2 } from "lucide-react";
+import { Boxes, Pencil, Plus, Power, Search, Store, Trash2 } from "lucide-react";
 import { deleteProduct, fetchProducts, resolveSignedUrls, updateProduct } from "@/lib/admin/api";
 import { formatMoney, toNum } from "@/lib/admin/format";
 import type { Product } from "@/lib/admin/types";
@@ -62,9 +62,34 @@ export default function ProductsPage() {
         production_cost: p.production_cost,
         sale_price: p.sale_price,
         is_active: !p.is_active,
+        is_ecommerce: p.is_ecommerce,
+        colors: p.colors,
       });
       setProducts((prev) =>
         (prev ?? []).map((x) => (x.id === p.id ? { ...x, is_active: !p.is_active } : x))
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo actualizar.");
+    }
+  };
+
+  const onToggleStore = async (p: Product) => {
+    try {
+      await updateProduct(p.id, {
+        name: p.name,
+        description: p.description,
+        category: p.category,
+        image: p.image,
+        print_minutes: p.print_minutes,
+        grams: p.grams,
+        production_cost: p.production_cost,
+        sale_price: p.sale_price,
+        is_active: p.is_active,
+        is_ecommerce: !p.is_ecommerce,
+        colors: p.colors,
+      });
+      setProducts((prev) =>
+        (prev ?? []).map((x) => (x.id === p.id ? { ...x, is_ecommerce: !p.is_ecommerce } : x))
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo actualizar.");
@@ -168,6 +193,14 @@ export default function ProductsPage() {
                       {p.grams != null ? ` · ${toNum(p.grams)} g` : ""}
                     </span>
                     <div className="table-actions">
+                      <button
+                        className="icon-btn"
+                        onClick={() => onToggleStore(p)}
+                        title={p.is_ecommerce ? "Publicado en la tienda" : "Uso interno (fuera de la tienda)"}
+                        style={{ color: p.is_ecommerce ? "var(--green, #22c55e)" : undefined }}
+                      >
+                        <Store />
+                      </button>
                       <button
                         className={cn("icon-btn", !p.is_active && "danger")}
                         onClick={() => onToggleActive(p)}

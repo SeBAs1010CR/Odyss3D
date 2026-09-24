@@ -7,12 +7,14 @@ import Services from "../components/Services";
 import About from "../components/About";
 import CTASection from "../components/CTASection";
 import Footer from "../components/Footer";
+import { CartProvider } from "../lib/store/CartContext";
+import { Cubo } from "../components/store/Cubo";
 
 const Hero = dynamic(() => import("../components/Hero"), { ssr: false });
 
 export default function Home() {
   return (
-    <>
+    <CartProvider>
       <Navbar />
       <main>
         <Hero />
@@ -22,6 +24,7 @@ export default function Home() {
         <CTASection />
       </main>
       <Footer />
-    </>
+      <Cubo />
+    </CartProvider>
   );
 }

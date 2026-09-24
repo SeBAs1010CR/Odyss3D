@@ -41,7 +41,7 @@ export default function EcommercePage() {
     return [...set].sort();
   }, [products]);
 
-  const active = useMemo(() => (products ?? []).filter((p) => p.is_active), [products]);
+  const active = useMemo(() => (products ?? []).filter((p) => p.is_ecommerce), [products]);
   const priced = useMemo(() => {
     const withPrice = active.filter((p) => p.sale_price != null);
     if (withPrice.length === 0) return 0;
@@ -79,12 +79,14 @@ export default function EcommercePage() {
         grams: p.grams,
         production_cost: p.production_cost,
         sale_price: p.sale_price,
-        is_active: !p.is_active,
+        is_active: p.is_active,
+        is_ecommerce: !p.is_ecommerce,
+        colors: p.colors,
       });
       setProducts((prev) =>
-        (prev ?? []).map((x) => (x.id === p.id ? { ...x, is_active: !p.is_active } : x))
+        (prev ?? []).map((x) => (x.id === p.id ? { ...x, is_ecommerce: !p.is_ecommerce } : x))
       );
-      flash(p.is_active ? "Producto retirado de la tienda." : "Producto publicado en la tienda.");
+      flash(p.is_ecommerce ? "Producto retirado de la tienda." : "Producto publicado en la tienda.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo actualizar.");
     } finally {
@@ -223,8 +225,8 @@ export default function EcommercePage() {
                 <div className="product-admin-body">
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span className="product-admin-category">{p.category ?? "Sin categoría"}</span>
-                    <Badge tone={p.is_active ? "green" : "slate"}>
-                      {p.is_active ? "En tienda" : "Fuera de tienda"}
+                    <Badge tone={p.is_ecommerce ? "green" : "slate"}>
+                      {p.is_ecommerce ? "En tienda" : "Uso interno / fuera"}
                     </Badge>
                   </div>
                   <div className="product-admin-name">{p.name}</div>
@@ -263,10 +265,10 @@ export default function EcommercePage() {
                     </span>
                     <div className="table-actions">
                       <button
-                        className={cn("icon-btn", !p.is_active && "danger")}
+                        className={cn("icon-btn", !p.is_ecommerce && "danger")}
                         onClick={() => onToggleStore(p)}
                         disabled={saving === p.id}
-                        title={p.is_active ? "Quitar de la tienda" : "Publicar en tienda"}
+                        title={p.is_ecommerce ? "Quitar de la tienda" : "Publicar en tienda"}
                       >
                         <Power />
                       </button>

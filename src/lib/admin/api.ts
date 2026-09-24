@@ -602,6 +602,10 @@ const mapProduct = (row: Record<string, unknown>): Product => ({
   production_cost: row.production_cost != null ? money(row.production_cost) : null,
   sale_price: row.sale_price != null ? money(row.sale_price) : null,
   is_active: Boolean(row.is_active),
+  is_ecommerce: Boolean(row.is_ecommerce),
+  colors: Array.isArray(row.colors)
+    ? (row.colors as unknown[]).map((c) => String(c)).filter(Boolean)
+    : [],
   created_by: (row.created_by as string) ?? null,
   updated_by: (row.updated_by as string) ?? null,
   created_at: String(row.created_at ?? ""),
@@ -648,6 +652,8 @@ export type ProductInput = {
   production_cost?: number | null;
   sale_price?: number | null;
   is_active: boolean;
+  is_ecommerce?: boolean;
+  colors?: string[];
 };
 
 export async function createProduct(input: ProductInput, withId?: string): Promise<Product> {
@@ -665,6 +671,8 @@ export async function createProduct(input: ProductInput, withId?: string): Promi
       production_cost: input.production_cost ?? null,
       sale_price: input.sale_price ?? null,
       is_active: input.is_active,
+      is_ecommerce: input.is_ecommerce ?? false,
+      colors: input.colors ?? [],
       created_by: user?.id ?? null,
       updated_by: user?.id ?? null,
     })

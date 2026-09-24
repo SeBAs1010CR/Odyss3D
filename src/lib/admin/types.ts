@@ -125,6 +125,8 @@ export interface Product {
   production_cost: number | null;
   sale_price: number | null;
   is_active: boolean;
+  is_ecommerce: boolean;
+  colors: string[];
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
