@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Save, Sparkles } from "lucide-react";
 import {
+  createFilamentColor,
   createProduct,
   fetchFilamentColors,
   updateProduct,
@@ -38,6 +39,7 @@ export function ProductForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [colorInput, setColorInput] = useState("");
+  const [colorHex, setColorHex] = useState("#0066ff");
   const [colorsList, setColorsList] = useState<FilamentColor[]>([]);
   const [pricing, setPricing] = useState<ProductPricingResult | null>(null);
 
@@ -67,13 +69,25 @@ export function ProductForm({
         : [...f.colors, name],
     }));
 
-  const addCustomColor = () => {
+  const addCustomColor = async () => {
     const name = colorInput.trim();
     if (!name) return;
-    setForm((f) =>
-      f.colors.includes(name) ? f : { ...f, colors: [...f.colors, name] }
-    );
-    setColorInput("");
+    setError("");
+    try {
+      await createFilamentColor(name, colorHex);
+      const list = await fetchFilamentColors();
+      setColorsList(list);
+      toggleColor(name);
+      setColorInput("");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No se pudo agregar el color.";
+      if (colorsList.some((c) => c.name === name)) {
+        toggleColor(name);
+        setColorInput("");
+      } else {
+        setError(message);
+      }
+    }
   };
 
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
@@ -217,26 +231,46 @@ export function ProductForm({
           <Field label="Colores (bolas de color)">
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <ColorPicker colors={colorsList} selected={form.colors} onToggle={toggleColor} />
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <label
+                  className="field-hint"
+                  style={{ margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                  title="Abrir paleta de color"
+                >
+                  <input
+                    type="color"
+                    value={colorHex}
+                    onChange={(e) => setColorHex(e.target.value)}
+                    style={{
+                      width: 38,
+                      height: 38,
+                      padding: 2,
+                      border: "1px solid var(--a-border)",
+                      borderRadius: 8,
+                      background: "transparent",
+                      cursor: "pointer",
+                    }}
+                  />
+                </label>
                 <input
                   className="input"
                   style={{ flex: 1 }}
                   value={colorInput}
-                  placeholder="Agregar color personalizado…"
+                  placeholder="Nombre del color (ej. Turquesa)…"
                   onChange={(e) => setColorInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      addCustomColor();
+                      void addCustomColor();
                     }
                   }}
                 />
-                <button type="button" className="btn-app btn-app-ghost" onClick={addCustomColor}>
+                <button type="button" className="btn-app btn-app-ghost" onClick={() => void addCustomColor()}>
                   Agregar
                 </button>
               </div>
             </div>
-            <p className="field-hint">Selecciona los colores para este producto; se muestran como bolas en la tienda.</p>
+            <p className="field-hint">Elige las bolas existentes, o crea un nuevo color con la paleta y el nombre (se guarda para usarlo en otros productos y pedidos).</p>
           </Field>
 
           <Field label="Tienda online">
