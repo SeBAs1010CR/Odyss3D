@@ -5,6 +5,7 @@ import { Save, Sparkles } from "lucide-react";
 import {
   createFilamentColor,
   createProduct,
+  fetchCalculatorConfig,
   fetchFilamentColors,
   updateProduct,
   type ProductInput,
@@ -12,7 +13,7 @@ import {
 import { PRODUCT_CATEGORIES } from "@/lib/admin/constants";
 import { toNum } from "@/lib/admin/format";
 import { computeProductPricing, type ProductPricingResult } from "@/lib/admin/productAutoPricing";
-import type { FilamentColor, Product } from "@/lib/admin/types";
+import type { CalculatorSharedSettings, FilamentColor, Product } from "@/lib/admin/types";
 import { createId } from "@/lib/admin/utils";
 import { Btn, Card, Field, Input, InputMoney, TextArea } from "@/components/admin/ui";
 import { ColorPicker } from "@/components/admin/ColorPicker";
@@ -42,9 +43,11 @@ export function ProductForm({
   const [colorHex, setColorHex] = useState("#0066ff");
   const [colorsList, setColorsList] = useState<FilamentColor[]>([]);
   const [pricing, setPricing] = useState<ProductPricingResult | null>(null);
+  const [calcShared, setCalcShared] = useState<CalculatorSharedSettings | null>(null);
 
   useEffect(() => {
     fetchFilamentColors().then(setColorsList).catch(() => setColorsList([]));
+    fetchCalculatorConfig().then(setCalcShared).catch(() => setCalcShared(null));
   }, []);
 
   const applyPricing = useCallback((r: ProductPricingResult) => {
@@ -56,10 +59,10 @@ export function ProductForm({
   }, []);
 
   useEffect(() => {
-    const r = computeProductPricing(form.grams, form.print_minutes);
+    const r = computeProductPricing(form.grams, form.print_minutes, calcShared);
     setPricing(r);
     if (r && !product) applyPricing(r);
-  }, [form.grams, form.print_minutes, product, applyPricing]);
+  }, [form.grams, form.print_minutes, product, calcShared, applyPricing]);
 
   const toggleColor = (name: string) =>
     setForm((f) => ({

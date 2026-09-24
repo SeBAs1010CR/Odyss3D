@@ -5,6 +5,7 @@ import { machineFund } from "./pricing";
 import { optimizeImage, slug } from "./utils";
 import type {
   Accessory,
+  CalculatorSharedSettings,
   ContactRequest,
   ContactRequestStatus,
   Customer,
@@ -725,6 +726,7 @@ export async function fetchSettings(): Promise<SettingsRecord> {
   if (error) throw new Error("No se pudieron cargar los ajustes.");
   const out: SettingsRecord = { ...SETTINGS_DEFAULTS };
   for (const row of data ?? []) {
+    if (row.key === "calculator_config") continue;
     out[row.key] = toNum(row.value);
   }
   return out;
@@ -741,6 +743,42 @@ export async function saveSettings(values: SettingsRecord): Promise<void> {
     });
     if (error) throw new Error(`No se pudo guardar el ajuste “${key}”.`);
   }
+}
+
+/* ============ CONFIGURACIÓN DE LA CALCULADORA ============ */
+
+export async function fetchCalculatorConfig(): Promise<CalculatorSharedSettings | null> {
+  const { data, error } = await createClient()
+    .from("settings")
+    .select("key,value")
+    .eq("key", "calculator_config")
+    .maybeSingle();
+
+  if (error || !data?.value || typeof data.value !== "object") return null;
+
+  const v = data.value as Record<string, unknown>;
+  return {
+    config: (v.config && typeof v.config === "object" ? v.config : {}) as Record<string, unknown>,
+    filamentPrice: money(v.filamentPrice),
+    rollWeight: money(v.rollWeight),
+    rounding: typeof v.rounding === "string" ? v.rounding : "none",
+  };
+}
+
+export async function saveCalculatorConfig(input: CalculatorSharedSettings): Promise<void> {
+  const user = await currentUser();
+  const { error } = await createClient().from("settings").upsert({
+    key: "calculator_config",
+    value: {
+      config: input.config,
+      filamentPrice: money(input.filamentPrice),
+      rollWeight: money(input.rollWeight),
+      rounding: input.rounding,
+    },
+    updated_by: user?.id ?? null,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw new Error("No se pudo guardar la configuración de la calculadora.");
 }
 
 /* ============ DASHBOARD ============ */

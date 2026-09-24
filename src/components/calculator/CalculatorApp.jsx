@@ -167,6 +167,28 @@ export default function CalculatorApp() {
     setInputs(localInputs)
     setUnlocked(window.sessionStorage.getItem(K_LOCK) === "1")
     setReady(true)
+
+    // Config compartida desde Configuración > Calculadora (fuente autoritativa).
+    fetch("/api/calculator-config", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((shared) => {
+        if (!shared?.configured || !shared?.config) return
+        setConfig((prev) => ({ ...prev, ...mergeConfig(shared.config) }))
+        setInputs((prev) => {
+          const next = { ...prev }
+          if (prev.filamentPrice === DEFAULT_INPUTS.filamentPrice) {
+            next.filamentPrice = String(shared.filamentPrice ?? prev.filamentPrice)
+          }
+          if (prev.rollWeight === DEFAULT_INPUTS.rollWeight) {
+            next.rollWeight = String(shared.rollWeight ?? prev.rollWeight)
+          }
+          if (ROUNDING_OPTIONS.some((r) => r.id === shared.rounding)) {
+            next.rounding = shared.rounding
+          }
+          return next
+        })
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {

@@ -148,6 +148,14 @@ export interface ContactRequest {
 
 export type SettingsRecord = Record<string, number>;
 
+/** Configuración compartida de la calculadora (/cal), guardada en settings. */
+export interface CalculatorSharedSettings {
+  config: Record<string, unknown>;
+  filamentPrice: number;
+  rollWeight: number;
+  rounding: string;
+}
+
 export interface DashboardData {
   counts: {
     pendiente: number;

@@ -4,6 +4,7 @@ import {
   mergeConfig,
   ROUNDING_OPTIONS,
 } from "@/lib/calculator";
+import type { CalculatorSharedSettings } from "@/lib/admin/types";
 
 const K_CONFIG = "odyss3d.cal.config.v1";
 const K_INPUTS = "odyss3d.cal.inputs.v1";
@@ -33,33 +34,60 @@ export type ProductPricingResult = {
  * lógica de la calculadora (/cal):
  *   - costo = filamento + electricidad + máquina (con el límite de mínimo ₡400)
  *   - precio de venta = costo × (1 + margen), con el mínimo y el redondeo de la calc
+ *
+ * Si `shared` viene de Configuración > Calculadora se usa esa config (fuente
+ * autoritativa); si no, se usa la config guardada en localStorage por la calc.
  */
 export function computeProductPricing(
   gramsRaw: string,
-  minutesRaw: string
+  minutesRaw: string,
+  shared?: CalculatorSharedSettings | null
 ): ProductPricingResult | null {
   const grams = Number.parseFloat(String(gramsRaw).replace(",", "."));
   const minutes = Number.parseFloat(String(minutesRaw).replace(",", "."));
   if (!Number.isFinite(grams) || grams <= 0) return null;
   if (!Number.isFinite(minutes) || minutes < 0) return null;
 
-  const config = mergeConfig(readLS<Record<string, unknown>>(K_CONFIG));
-  const inputs = readLS<{ rounding?: string }>(K_INPUTS);
-  const roundingId =
-    inputs?.rounding && ROUNDING_OPTIONS.some((r) => r.id === inputs.rounding)
-      ? inputs.rounding
-      : "100";
-
-  const total = computeAll(
-    {
-      hours: 0,
-      minutes: String(Math.round(minutes)),
-      grams: String(grams),
-      quantity: "1",
-      rounding: roundingId,
-    },
-    config
+  const config = mergeConfig(
+    shared?.config && Object.keys(shared.config).length > 0
+      ? shared.config
+      : readLS<Record<string, unknown>>(K_CONFIG)
   );
+  const inputs = readLS<{
+    rounding?: string;
+    filamentPrice?: string | number;
+    rollWeight?: string | number;
+  }>(K_INPUTS);
+  const roundingId =
+    shared?.rounding && ROUNDING_OPTIONS.some((r) => r.id === shared.rounding)
+      ? shared.rounding
+      : inputs?.rounding && ROUNDING_OPTIONS.some((r) => r.id === inputs.rounding)
+        ? inputs.rounding
+        : "100";
+
+  const calcInputs: Record<string, unknown> = {
+    hours: 0,
+    minutes: String(Math.round(minutes)),
+    grams: String(grams),
+    quantity: "1",
+    rounding: roundingId,
+  };
+  const filament =
+    shared && Number.isFinite(shared.filamentPrice) && shared.filamentPrice > 0
+      ? shared.filamentPrice
+      : inputs?.filamentPrice;
+  if (String(filament ?? "").trim() !== "") {
+    calcInputs.filamentPrice = filament;
+  }
+  const roll =
+    shared && Number.isFinite(shared.rollWeight) && shared.rollWeight > 0
+      ? shared.rollWeight
+      : inputs?.rollWeight;
+  if (String(roll ?? "").trim() !== "") {
+    calcInputs.rollWeight = roll;
+  }
+
+  const total = computeAll(calcInputs, config);
 
   const rawCost = total.costPerUnit;
   const minCostApplied = rawCost < MIN_COST;

@@ -2,14 +2,17 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
+import { DEFAULT_CONFIG, MARGIN_TIER_LABELS, ROUNDING_OPTIONS } from "@/lib/calculator";
 import {
   createAccessory,
   createFilamentColor,
   deleteAccessory,
   deleteFilamentColor,
   fetchAccessories,
+  fetchCalculatorConfig,
   fetchFilamentColors,
   fetchSettings,
+  saveCalculatorConfig,
   saveSettings,
   updateAccessory,
 } from "@/lib/admin/api";
@@ -17,7 +20,7 @@ import { SETTINGS_FIELDS } from "@/lib/admin/constants";
 import { toNum } from "@/lib/admin/format";
 import type { Accessory, FilamentColor } from "@/lib/admin/types";
 import type { SettingsRecord } from "@/lib/admin/types";
-import { Btn, Card, Field, Input, InputMoney, LoadingBlock } from "@/components/admin/ui";
+import { Btn, Card, Field, Input, InputMoney, LoadingBlock, SelectBox } from "@/components/admin/ui";
 
 const groups = [
   { id: "costos", title: "Costos de producción" },
@@ -35,6 +38,37 @@ const groupOf = (key: string): string => {
   return "costos";
 };
 
+type CalcFormState = {
+  electricityPerMinute: string;
+  machinePerHour: string;
+  minimumPrice: string;
+  ring: string;
+  packSmall: string;
+  packMedium: string;
+  packLarge: string;
+  margins: string[];
+  filamentPrice: string;
+  rollWeight: string;
+  rounding: string;
+};
+
+function calcFormDefaults(): CalcFormState {
+  const d = DEFAULT_CONFIG;
+  return {
+    electricityPerMinute: String(d.costs.electricityPerMinute),
+    machinePerHour: String(d.costs.machinePerHour),
+    minimumPrice: String(d.minimumPrice),
+    ring: String(d.accessories.ring),
+    packSmall: String(d.packaging.small),
+    packMedium: String(d.packaging.medium),
+    packLarge: String(d.packaging.large),
+    margins: d.margins.map((m) => String(Math.round(m.value * 100 * 10) / 10)),
+    filamentPrice: "12000",
+    rollWeight: "1000",
+    rounding: "none",
+  };
+}
+
 export default function SettingsPage() {
   const [values, setValues] = useState<SettingsRecord | null>(null);
   const [colors, setColors] = useState<FilamentColor[]>([]);
@@ -42,6 +76,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  const [calcForm, setCalcForm] = useState<CalcFormState | null>(null);
+  const [calcSaving, setCalcSaving] = useState(false);
+  const [calcSaved, setCalcSaved] = useState(false);
 
   const [newColor, setNewColor] = useState({ name: "", hex: "" });
   const [newAccessory, setNewAccessory] = useState({ name: "", price: "", cost: "" });
@@ -56,6 +94,89 @@ export default function SettingsPage() {
       })
       .catch((e) => setError(e.message));
   }, []);
+
+  useEffect(() => {
+    fetchCalculatorConfig()
+      .then((cfg) => {
+        if (!cfg) {
+          setCalcForm(calcFormDefaults());
+          return null;
+        }
+        const c = cfg.config as {
+          costs?: Partial<typeof DEFAULT_CONFIG.costs>;
+          accessories?: Partial<typeof DEFAULT_CONFIG.accessories>;
+          packaging?: Partial<typeof DEFAULT_CONFIG.packaging>;
+          margins?: { value: number }[];
+          minimumPrice?: number;
+        };
+        const { costs, accessories, packaging, margins, minimumPrice } = c;
+        setCalcForm({
+          electricityPerMinute: String(costs?.electricityPerMinute ?? DEFAULT_CONFIG.costs.electricityPerMinute),
+          machinePerHour: String(costs?.machinePerHour ?? DEFAULT_CONFIG.costs.machinePerHour),
+          minimumPrice: String(minimumPrice ?? DEFAULT_CONFIG.minimumPrice),
+          ring: String(accessories?.ring ?? DEFAULT_CONFIG.accessories.ring),
+          packSmall: String(packaging?.small ?? DEFAULT_CONFIG.packaging.small),
+          packMedium: String(packaging?.medium ?? DEFAULT_CONFIG.packaging.medium),
+          packLarge: String(packaging?.large ?? DEFAULT_CONFIG.packaging.large),
+          margins:
+            margins && margins.length === DEFAULT_CONFIG.margins.length
+              ? margins.map((m) => String(Math.round((m.value ?? 0) * 100 * 10) / 10))
+              : DEFAULT_CONFIG.margins.map((m) => String(Math.round(m.value * 100 * 10) / 10)),
+          filamentPrice: String(cfg.filamentPrice || 12000),
+          rollWeight: String(cfg.rollWeight || 1000),
+          rounding: cfg.rounding || "none",
+        });
+        return null;
+      })
+      .catch(() => setCalcForm(calcFormDefaults()));
+  }, []);
+
+  const setCalc = (patch: Partial<CalcFormState>) =>
+    setCalcForm((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  const setCalcMargin = (idx: number, value: string) =>
+    setCalcForm((prev) =>
+      prev ? { ...prev, margins: prev.margins.map((m, i) => (i === idx ? value : m)) } : prev
+    );
+
+  const onSaveCalculator = async () => {
+    if (!calcForm) return;
+    setCalcSaving(true);
+    setCalcSaved(false);
+    setError("");
+    try {
+      const margins = DEFAULT_CONFIG.margins.map((m, i) => ({
+        min: m.min,
+        max: m.max,
+        value: toNum(calcForm.margins[i]) / 100,
+      }));
+      await saveCalculatorConfig({
+        config: {
+          costs: {
+            electricityPerMinute: toNum(calcForm.electricityPerMinute),
+            machinePerHour: toNum(calcForm.machinePerHour),
+          },
+          accessories: { ring: toNum(calcForm.ring) },
+          packaging: {
+            none: 0,
+            small: toNum(calcForm.packSmall),
+            medium: toNum(calcForm.packMedium),
+            large: toNum(calcForm.packLarge),
+          },
+          margins,
+          minimumPrice: toNum(calcForm.minimumPrice),
+        },
+        filamentPrice: toNum(calcForm.filamentPrice),
+        rollWeight: toNum(calcForm.rollWeight),
+        rounding: calcForm.rounding,
+      });
+      setCalcSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar la configuración de la calculadora.");
+    } finally {
+      setCalcSaving(false);
+    }
+  };
 
   const merged = useMemo<SettingsRecord>(() => {
     const base = { ...settingsDefaults() };
@@ -230,6 +351,76 @@ export default function SettingsPage() {
               ))
             )}
           </div>
+        </Card>
+
+        <Card
+          title="Calculadora de costos (/cal)"
+          actions={<Btn type="button" variant="ghost" size="sm" loading={calcSaving} onClick={() => void onSaveCalculator()}><Save /> Guardar calculadora</Btn>}
+        >
+          {calcSaved && <p className="success-text" style={{ marginBottom: 14 }}>Configuración de la calculadora guardada.</p>}
+          {calcForm && (
+            <>
+              <div className="field-grid">
+                <Field label="Electricidad por minuto" hint="Costo de energía por minuto impreso">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.electricityPerMinute} onChange={(e) => setCalc({ electricityPerMinute: e.target.value })} />
+                </Field>
+                <Field label="Máquina por hora" hint="Incluye mantenimiento y desgaste">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.machinePerHour} onChange={(e) => setCalc({ machinePerHour: e.target.value })} />
+                </Field>
+                <Field label="Precio mínimo por pieza">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.minimumPrice} onChange={(e) => setCalc({ minimumPrice: e.target.value })} />
+                </Field>
+                <Field label="Argolla por pieza">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.ring} onChange={(e) => setCalc({ ring: e.target.value })} />
+                </Field>
+                <Field label="Bolsa pequeña">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.packSmall} onChange={(e) => setCalc({ packSmall: e.target.value })} />
+                </Field>
+                <Field label="Bolsa mediana">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.packMedium} onChange={(e) => setCalc({ packMedium: e.target.value })} />
+                </Field>
+                <Field label="Bolsa grande">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.packLarge} onChange={(e) => setCalc({ packLarge: e.target.value })} />
+                </Field>
+                <Field label="Precio de filamento por rollo" hint="Se usa como predeterminado al calcular productos">
+                  <InputMoney type="number" min={0} step="0.01" value={calcForm.filamentPrice} onChange={(e) => setCalc({ filamentPrice: e.target.value })} />
+                </Field>
+                <Field label="Peso del rollo (gramos)">
+                  <InputMoney suffix="g" type="number" min={1} value={calcForm.rollWeight} onChange={(e) => setCalc({ rollWeight: e.target.value })} />
+                </Field>
+                <Field label="Redondeo del precio">
+                  <SelectBox value={calcForm.rounding} onChange={(e) => setCalc({ rounding: e.target.value })}>
+                    {ROUNDING_OPTIONS.map((r) => (
+                      <option key={r.id} value={r.id}>{r.label}</option>
+                    ))}
+                  </SelectBox>
+                </Field>
+              </div>
+
+              <div className="form-section-title" style={{ marginTop: 18 }}>Márgenes por cantidad</div>
+              <div className="field-grid">
+                {calcForm.margins.map((m, i) => (
+                  <Field key={i} label={MARGIN_TIER_LABELS[i]}>
+                    <InputMoney
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      suffix="%"
+                      value={m}
+                      onChange={(e) => setCalcMargin(i, e.target.value)}
+                    />
+                  </Field>
+                ))}
+              </div>
+
+              <p className="field-hint" style={{ marginTop: 12 }}>
+                Esta configuración es la que usa la calculadora (/cal) y el cálculo de costo y precio
+                de los productos del catálogo (aparece automáticamente al guardar un producto con gramos
+                y tiempo de impresión). Es compartida: vale lo mismo en todas las computadoras, sin depender
+                del navegador.
+              </p>
+            </>
+          )}
         </Card>
 
         <Card title="Accesorios" actions={<span className="table-muted">argollas, stickers, bolsas…</span>}>
