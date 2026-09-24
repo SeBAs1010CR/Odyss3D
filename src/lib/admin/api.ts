@@ -87,7 +87,8 @@ export async function fetchStaff(): Promise<Record<string, string>> {
 
 /* ============ HELPERS ============ */
 
-const NON_REVENUE = new Set<OrderStatus>(["cancelado", "cotizacion"]);
+/** Solo los pedidos entregados cuentan como venta / ingreso del negocio. */
+const REVENUE_STATUSES = new Set<OrderStatus>(["entregado"]);
 
 const money = (v: unknown): number => toNum(v);
 
@@ -551,7 +552,7 @@ export async function fetchCustomer(key: string): Promise<CustomerWithStats | nu
     .order("created_at", { ascending: false });
 
   const orderList = (orders ?? []).map((r: Record<string, unknown>) => mapOrder(r));
-  const active = orderList.filter((o) => !NON_REVENUE.has(o.status));
+  const active = orderList.filter((o) => REVENUE_STATUSES.has(o.status));
 
   return {
     ...customer,
@@ -831,7 +832,7 @@ export async function fetchPaymentsBreakdown(
 
   for (const o of orders) {
     const status = (o.status as OrderStatus) ?? "pendiente";
-    if (NON_REVENUE.has(status)) continue;
+    if (!REVENUE_STATUSES.has(status)) continue;
 
     const items = (o.items as unknown[]) ?? [];
     let f = 0;
@@ -928,7 +929,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   for (const o of orders) {
     counts[o.status] = (counts[o.status] ?? 0) + 1;
-    if (o.order_date.startsWith(monthPrefix) && !NON_REVENUE.has(o.status)) {
+    if (o.order_date.startsWith(monthPrefix) && REVENUE_STATUSES.has(o.status)) {
       month_sales += o.total;
       month_profit += o.estimated_profit;
       month_machine_fund += o.machine_fund;
@@ -989,7 +990,7 @@ export async function fetchStatistics(
     return o;
   });
 
-  const active = orderList.filter((o) => !NON_REVENUE.has(o.status));
+  const active = orderList.filter((o) => REVENUE_STATUSES.has(o.status));
 
   const sales = Math.round(active.reduce((s, o) => s + o.total, 0) * 100) / 100;
   const profit = Math.round(active.reduce((s, o) => s + o.estimated_profit, 0) * 100) / 100;
