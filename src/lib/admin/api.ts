@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_INPUTS, mergeConfig } from "@/lib/calculator";
 import { ADMIN_EMAIL_DOMAIN, SETTINGS_DEFAULTS } from "./constants";
 import { startOfRange, startOfDay, toNum } from "./format";
 import { machineFund } from "./pricing";
@@ -15,6 +16,8 @@ import type {
   Order,
   OrderAccessory,
   OrderStatus,
+  PaymentsData,
+  PaymentOrderRow,
   Product,
   Profile,
   SettingsRecord,
@@ -779,6 +782,122 @@ export async function saveCalculatorConfig(input: CalculatorSharedSettings): Pro
     updated_at: new Date().toISOString(),
   });
   if (error) throw new Error("No se pudo guardar la configuración de la calculadora.");
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/* ============ APARTADOS / PAGOS ============ */
+
+export async function fetchPaymentsBreakdown(
+  range: "week" | "month" | "3months" | "year"
+): Promise<PaymentsData> {
+  const start = startOfRange(range);
+  const startStr = start.toISOString().slice(0, 10);
+
+  const [ordersRes, productsRes, shared] = await Promise.all([
+    createClient()
+      .from("orders")
+      .select(
+        "id,number,order_date,status,total,estimated_profit,machine_fund," +
+          "customer:customers(name),items:order_items(product_id,quantity,production_cost)"
+      )
+      .gte("order_date", startStr),
+    createClient().from("products").select("id,grams,print_minutes"),
+    fetchCalculatorConfig(),
+  ]);
+
+  const productMap = new Map<string, { grams: number | null; print_minutes: number | null }>();
+  for (const p of (productsRes.data ?? []) as unknown as Record<string, unknown>[]) {
+    productMap.set(String(p.id), {
+      grams: p.grams != null ? toNum(p.grams) : null,
+      print_minutes: p.print_minutes != null ? toNum(p.print_minutes) : null,
+    });
+  }
+
+  const cfg = mergeConfig(shared?.config ?? null);
+  const filamentPrice = shared?.filamentPrice || toNum(DEFAULT_INPUTS.filamentPrice);
+  const rollWeight = Math.max(1, shared?.rollWeight || toNum(DEFAULT_INPUTS.rollWeight));
+  const electricityPerMinute = cfg.costs.electricityPerMinute;
+  const machinePerMinute = cfg.costs.machinePerHour / 60;
+
+  const orders = (ordersRes.data ?? []) as unknown as Record<string, unknown>[];
+  const rows: PaymentOrderRow[] = [];
+  let totalSales = 0;
+  let totalFilament = 0;
+  let totalElectricity = 0;
+  let totalMachine = 0;
+  let totalFund = 0;
+  let totalProfit = 0;
+
+  for (const o of orders) {
+    const status = (o.status as OrderStatus) ?? "pendiente";
+    if (NON_REVENUE.has(status)) continue;
+
+    const items = (o.items as unknown[]) ?? [];
+    let f = 0;
+    let e = 0;
+    let m = 0;
+
+    for (const raw of items) {
+      const it = raw as Record<string, unknown>;
+      const qty = Math.max(0, toNum(it.quantity, 1));
+      const prod = it.production_cost != null ? Math.max(0, toNum(it.production_cost)) : 0;
+      if (prod <= 0 || qty <= 0) continue;
+
+      const meta = it.product_id != null ? productMap.get(String(it.product_id)) : undefined;
+      const grams = meta?.grams != null ? meta.grams : NaN;
+      const minutes = meta?.print_minutes != null ? meta.print_minutes : NaN;
+
+      if (grams > 0 && minutes >= 0) {
+        const filX = qty * ((grams * filamentPrice) / rollWeight);
+        const eleX = qty * (minutes * electricityPerMinute);
+        const machX = qty * prod - filX - eleX;
+        f += filX;
+        e += eleX;
+        m += Math.max(0, machX);
+      } else {
+        m += qty * prod;
+      }
+    }
+
+    const profit = money(o.estimated_profit);
+    const fund = money(o.machine_fund);
+    const row: PaymentOrderRow = {
+      id: String(o.id),
+      number: toNum(o.number),
+      order_date: String(o.order_date ?? ""),
+      status,
+      customer_name: String((o.customer as { name?: string })?.name ?? ""),
+      items_count: items.length,
+      total: money(o.total),
+      filament: round2(f),
+      electricity: round2(e),
+      machine: round2(m),
+      profit: round2(profit),
+      machine_fund: round2(fund),
+      profit_net: round2(profit - fund),
+    };
+    rows.push(row);
+
+    totalSales += row.total;
+    totalFilament += row.filament;
+    totalElectricity += row.electricity;
+    totalMachine += row.machine;
+    totalFund += row.machine_fund;
+    totalProfit += row.profit;
+  }
+
+  return {
+    range,
+    sales: round2(totalSales),
+    filament: round2(totalFilament),
+    electricity: round2(totalElectricity),
+    machine: round2(totalMachine),
+    machine_fund: round2(totalFund),
+    profit: round2(totalProfit),
+    profit_net: round2(totalProfit - totalFund),
+    orders: rows,
+  };
 }
 
 /* ============ DASHBOARD ============ */

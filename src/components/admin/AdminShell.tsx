@@ -14,6 +14,7 @@ import {
   Settings,
   Store,
   Users,
+  Wallet,
 } from "lucide-react";
 import { currentUser, fetchProfile, signOut } from "@/lib/admin/api";
 import { cn } from "@/lib/admin/utils";
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/admin/ecommerce", label: "Ecommerce", icon: Store },
   { href: "/admin/requests", label: "Solicitudes", icon: Inbox },
   { href: "/admin/statistics", label: "Estadísticas", icon: BarChart3 },
+  { href: "/admin/pagos", label: "Pagos", icon: Wallet },
   { href: "/admin/settings", label: "Configuración", icon: Settings },
 ];
 

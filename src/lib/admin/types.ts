@@ -156,6 +156,35 @@ export interface CalculatorSharedSettings {
   rounding: string;
 }
 
+export interface PaymentOrderRow {
+  id: string;
+  number: number;
+  order_date: string;
+  status: OrderStatus;
+  customer_name: string;
+  items_count: number;
+  total: number;
+  filament: number;
+  electricity: number;
+  machine: number;
+  profit: number;
+  machine_fund: number;
+  profit_net: number;
+}
+
+/** Apartados: cuánto poner a un lado de cada venta (filamento, luz, máquina/repuestos, fondo y ganancia). */
+export interface PaymentsData {
+  range: string;
+  sales: number;
+  filament: number;
+  electricity: number;
+  machine: number;
+  machine_fund: number;
+  profit: number;
+  profit_net: number;
+  orders: PaymentOrderRow[];
+}
+
 export interface DashboardData {
   counts: {
     pendiente: number;
