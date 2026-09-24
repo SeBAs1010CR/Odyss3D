@@ -92,7 +92,7 @@ export default function ConfigPanel({
                     prefix="₡"
                     value={config.costs.machinePerHour}
                     onChange={(v) => onCost("machinePerHour", v)}
-                    hint="Incluye mantenimiento y desgaste"
+                    hint="Para adquirir nuevas máquinas"
                   />
                 </div>
               </section>

@@ -77,7 +77,7 @@ export const SETTINGS_FIELDS: {
   { key: "discount_50", label: "Descuento 51–100 uds", defaultValue: 25, suffix: "%", step: 0.01 },
   { key: "discount_100", label: "Descuento 101+ uds", defaultValue: 37.5, suffix: "%", step: 0.01 },
   { key: "min_margin", label: "Margen mínimo", defaultValue: 40, suffix: "%", hint: "El precio nunca baja de costo ÷ (1 − margen)" },
-  { key: "machine_fund_percent", label: "Reserva de maquinaria", defaultValue: 10, suffix: "%", hint: "Se descuenta de la ganancia para reemplazo de impresoras" },
+  { key: "machine_fund_percent", label: "Mantenimiento", defaultValue: 10, suffix: "%", hint: "Se descuenta de la ganancia para mantenimiento y repuestos de impresoras" },
 ];
 
 export const SETTINGS_DEFAULTS: SettingsRecord = Object.fromEntries(

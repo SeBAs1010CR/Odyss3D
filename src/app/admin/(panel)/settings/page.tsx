@@ -27,7 +27,7 @@ const groups = [
   { id: "margenes", title: "Márgenes por cantidad" },
   { id: "precios", title: "Precios" },
   { id: "descuentos", title: "Descuentos por cantidad" },
-  { id: "maquinaria", title: "Fondo de maquinaria" },
+  { id: "maquinaria", title: "Mantenimiento" },
 ] as const;
 
 const groupOf = (key: string): string => {
@@ -364,7 +364,7 @@ export default function SettingsPage() {
                 <Field label="Electricidad por minuto" hint="Costo de energía por minuto impreso">
                   <InputMoney type="number" min={0} step="0.01" value={calcForm.electricityPerMinute} onChange={(e) => setCalc({ electricityPerMinute: e.target.value })} />
                 </Field>
-                <Field label="Máquina por hora" hint="Incluye mantenimiento y desgaste">
+                <Field label="Máquina por hora" hint="Para adquirir nuevas máquinas">
                   <InputMoney type="number" min={0} step="0.01" value={calcForm.machinePerHour} onChange={(e) => setCalc({ machinePerHour: e.target.value })} />
                 </Field>
                 <Field label="Precio mínimo por pieza">

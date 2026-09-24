@@ -43,7 +43,7 @@ export default function PaymentsPage() {
       <div className="admin-page-head">
         <div>
           <h1 className="admin-page-title">Pagos y apartados</h1>
-          <p className="admin-page-sub">Cuánto apartar de cada venta: filamento, luz, máquina y repuestos, fondo y ganancia</p>
+          <p className="admin-page-sub">Cuánto apartar de cada venta: filamento, luz, nuevas máquinas, mantenimiento y ganancia</p>
         </div>
         <div className="admin-page-actions">
           <div className="filter-tabs">
@@ -70,8 +70,8 @@ export default function PaymentsPage() {
             <StatCard icon={<DollarSign />} color="#0066ff" label="Ventas" value={`₡${formatMoney(data.sales)}`} />
             <StatCard icon={<Sparkles />} color="#a855f7" label="Apartar: filamento" value={`₡${formatMoney(data.filament)}`} />
             <StatCard icon={<Lightbulb />} color="#f59e0b" label="Apartar: electricidad" value={`₡${formatMoney(data.electricity)}`} />
-            <StatCard icon={<Wrench />} color="#ef4444" label="Apartar: máquina y repuestos" value={`₡${formatMoney(data.machine)}`} />
-            <StatCard icon={<Landmark />} color="#3b82f6" label="Fondo de maquinaria" value={`₡${formatMoney(data.machine_fund)}`} />
+            <StatCard icon={<Wrench />} color="#ef4444" label="Apartar: nuevas máquinas" value={`₡${formatMoney(data.machine)}`} />
+            <StatCard icon={<Landmark />} color="#3b82f6" label="Mantenimiento" value={`₡${formatMoney(data.machine_fund)}`} />
             <StatCard icon={<Cpu />} color="#22c55e" label="Ganancia neta" value={`₡${formatMoney(data.profit_net)}`} />
           </div>
 
@@ -99,16 +99,16 @@ export default function PaymentsPage() {
                 <div className="pay-bucket">
                   <span className="pay-bucket-dot" style={{ background: "#ef4444" }} />
                   <div>
-                    <strong>Máquina, repuestos y mantenimiento</strong>
-                    <p>Para desgaste, piezas de repuesto y mantenimiento de las impresoras.</p>
+                    <strong>Nuevas máquinas</strong>
+                    <p>Para adquirir nuevas impresoras (costo por hora de máquina).</p>
                   </div>
                   <span className="pay-bucket-value">₡{formatMoney(data.machine)}</span>
                 </div>
                 <div className="pay-bucket">
                   <span className="pay-bucket-dot" style={{ background: "#3b82f6" }} />
                   <div>
-                    <strong>Fondo de maquinaria</strong>
-                    <p>Reserva del {Math.round((data.machine_fund / Math.max(data.profit, 1)) * 100)}% de la ganancia para reemplazo de impresoras.</p>
+                    <strong>Mantenimiento</strong>
+                    <p>Reserva del {Math.round((data.machine_fund / Math.max(data.profit, 1)) * 100)}% de la ganancia para mantenimiento y repuestos.</p>
                   </div>
                   <span className="pay-bucket-value">₡{formatMoney(data.machine_fund)}</span>
                 </div>
@@ -139,7 +139,7 @@ export default function PaymentsPage() {
                         <th>Estado</th>
                         <th className="table-right">Filamento</th>
                         <th className="table-right">Electricidad</th>
-                        <th className="table-right">Máquina/repuestos</th>
+                        <th className="table-right">Máquina (nuevas)</th>
                         <th className="table-right">Total</th>
                         <th className="table-right">Ganancia neta</th>
                       </tr>
@@ -164,7 +164,7 @@ export default function PaymentsPage() {
 
                 <p className="field-hint" style={{ marginTop: 12 }}>
                   El desglose usa la configuración compartida de la calculadora (Configuración &gt; Calculadora).
-                  Para piezas sin datos de gramos/tiempo, el costo se agrupa completo en “Máquina/repuestos”.
+                  Para piezas sin datos de gramos/tiempo, el costo se agrupa completo en “Máquina (nuevas)”.
                 </p>
               </>
             )}

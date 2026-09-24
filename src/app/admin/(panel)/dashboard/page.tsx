@@ -93,7 +93,7 @@ export default function DashboardPage() {
         <StatCard
           icon={<Factory />}
           color="#f59e0b"
-          label="Fondo maquinaria (mes)"
+          label="Mantenimiento (mes)"
           value={`₡${formatMoney(data.month_machine_fund)}`}
         />
         <StatCard

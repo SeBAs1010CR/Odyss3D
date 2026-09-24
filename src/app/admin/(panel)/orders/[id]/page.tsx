@@ -449,7 +449,7 @@ export default function OrderDetailPage() {
               <span className="value" style={{ color: "#4ade80" }}>₡{formatMoney(profit)}</span>
             </div>
             <div className="order-summary-row">
-              <span className="label">Fondo de maquinaria ({settings.machine_fund_percent}%)</span>
+              <span className="label">Mantenimiento ({settings.machine_fund_percent}%)</span>
               <span className="value" style={{ color: "#f59e0b" }}>−₡{formatMoney(mf)}</span>
             </div>
             <div className="order-summary-row">

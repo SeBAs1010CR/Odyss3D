@@ -209,7 +209,7 @@ export const computeAll = (rawInputs, rawConfig) => {
       id: "machine",
       label: "Máquina",
       value: machine,
-      note: `${formatCRC(minutes, 0)} min × ₡${formatCRC(machinePerMinute, 2)} · incluye mantenimiento y desgaste`,
+      note: `${formatCRC(minutes, 0)} min × ₡${formatCRC(machinePerMinute, 2)} · para adquirir nuevas máquinas`,
     },
   ]
   if (hasRing) {

@@ -73,7 +73,7 @@ export default function StatisticsPage() {
             <StatCard icon={<TrendingUp />} color="#0066ff" label="Ventas" value={`₡${formatMoney(data.sales)}`} />
             <StatCard icon={<PiggyBank />} color="#22c55e" label="Ganancias (bruto)" value={`₡${formatMoney(data.profit)}`} />
             <StatCard icon={<TrendingUp />} color="#4ade80" label="Ganancia neta" value={`₡${formatMoney(data.profit - data.machine_fund)}`} />
-            <StatCard icon={<Factory />} color="#f59e0b" label="Fondo maquinaria" value={`₡${formatMoney(data.machine_fund)}`} />
+            <StatCard icon={<Factory />} color="#f59e0b" label="Mantenimiento" value={`₡${formatMoney(data.machine_fund)}`} />
             <StatCard icon={<Package />} color="#f59e0b" label="Pedidos" value={data.orders_count} />
             <StatCard icon={<PackageCheck />} color="#a855f7" label="Productos vendidos" value={data.products_sold} />
             <StatCard icon={<UserPlus />} color="#3b82f6" label="Clientes nuevos" value={data.new_customers} />

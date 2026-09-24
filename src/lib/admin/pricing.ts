@@ -43,7 +43,7 @@ export function discountedPrice(
   return Math.round(price * 100) / 100;
 }
 
-/** Reserva para maquinaria (impresoras, reparaciones…). */
+/** Reserva para mantenimiento de impresoras (mantenimiento, repuestos…). */
 export function machineFund(profit: number, s: SettingsRecord): number {
   const settings = { ...SETTINGS_DEFAULTS, ...s };
   const pct = settings.machine_fund_percent ?? 0;
