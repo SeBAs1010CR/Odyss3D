@@ -33,7 +33,7 @@ export type ProductPricingResult = {
  * Calcula costo de producción y precio de venta sugerido usando la misma
  * lógica de la calculadora (/cal):
  *   - costo = filamento + electricidad + máquina (con el límite de mínimo ₡400)
- *   - precio de venta = costo × (1 + margen), con el mínimo y el redondeo de la calc
+ *   - precio de venta = costo ÷ (1 − margen) (margen real: 50% significa 50% del precio)
  *
  * Si `shared` viene de Configuración > Calculadora se usa esa config (fuente
  * autoritativa); si no, se usa la config guardada en localStorage por la calc.
@@ -93,7 +93,7 @@ export function computeProductPricing(
   const minCostApplied = rawCost < MIN_COST;
   const productionCost = Math.max(rawCost, MIN_COST);
 
-  const rawSale = productionCost * (1 + total.margin);
+  const rawSale = productionCost / (1 - total.margin);
   const minSale = Math.max(rawSale, total.minimumPrice);
   const roundingValue = ROUNDING_OPTIONS.find((r) => r.id === roundingId)?.value ?? 0;
   const rounded = applyRounding(minSale, roundingValue);

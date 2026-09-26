@@ -79,7 +79,7 @@ export const getRecommendedMargin = (quantity, margins = DEFAULT_CONFIG.margins)
   return 0.3
 }
 
-const clampMargin = (m) => Math.min(Math.max(safeNum(m), 0), 3)
+const clampMargin = (m) => Math.min(Math.max(safeNum(m), 0), 0.95)
 
 export const calculateFilamentCost = (grams, filamentPrice, rollWeight) => {
   const g = Math.max(0, safeNum(grams))
@@ -110,8 +110,12 @@ export const calculateExtrasCost = ({ ring = false, packaging = "none" }, config
 export const calculateTotalCost = ({ filament, electricity, machine, extras }) =>
   Math.max(0, safeNum(filament) + safeNum(electricity) + safeNum(machine) + safeNum(extras))
 
-export const calculateSellingPrice = (cost, margin) =>
-  Math.max(0, safeNum(cost) * (1 + clampMargin(margin)))
+export const calculateSellingPrice = (cost, margin) => {
+  const base = Math.max(0, safeNum(cost))
+  const m = clampMargin(margin)
+  // Margen real: precio = costo / (1 − margen). Con 50% → costo × 2 (50% del precio es ganancia).
+  return m >= 1 ? base : base / (1 - m)
+}
 
 export const calculateProfit = (sellingPrice, cost) => sellingPrice - cost
 
