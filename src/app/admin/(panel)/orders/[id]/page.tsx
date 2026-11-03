@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Printer, Save, Trash2 } from "lucide-react";
 import {
   addOrderImage,
   deleteOrder,
@@ -283,6 +283,9 @@ export default function OrderDetailPage() {
         </div>
         <div className="admin-page-actions">
           <span className="detail-status"><StatusBadge status={order.status} /></span>
+          <Btn variant="ghost" onClick={() => window.open(`/admin/factura/${order.id}`, "_blank")}>
+            <Printer /> Imprimir factura
+          </Btn>
           <Btn variant="danger" onClick={() => setConfirmDelete(true)}>
             <Trash2 /> Eliminar
           </Btn>
