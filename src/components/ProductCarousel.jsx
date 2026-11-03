@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const INTERVAL_MS = 6000;
+const INTERVAL_MS = 2000;
 const MAX_SLIDES = 8;
 
 function resolveImage(src) {

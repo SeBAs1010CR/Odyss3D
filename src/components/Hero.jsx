@@ -30,7 +30,7 @@ export default function Hero() {
 
       <div className="container hero-content">
         <motion.img
-          src="/images/branding/logo-horizontal.png?v=2"
+          src="/images/branding/Logo%20sin%20fondo.png"
           alt="ODYSS3D"
           className="hero-logo"
           {...fadeUp(0.05)}
@@ -47,7 +47,7 @@ export default function Hero() {
         </motion.p>
 
         <motion.div className="hero-actions" {...fadeUp(0.5)}>
-          <a href="#productos" className="btn btn-primary">
+          <a href="/productos" className="btn btn-primary">
             Explorar productos
           </a>
           <a href="#servicios" className="btn btn-secondary">
@@ -55,22 +55,6 @@ export default function Hero() {
           </a>
         </motion.div>
       </div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4, duration: 1 }}
-        className="hero-scroll"
-        aria-hidden
-      >
-        <span>Scroll</span>
-        <div className="hero-scroll-line">
-          <motion.span
-            animate={{ y: ["-100%", "260%"] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-      </motion.div>
     </section>
   );
 }

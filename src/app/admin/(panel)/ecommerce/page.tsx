@@ -131,7 +131,7 @@ export default function EcommercePage() {
           <p className="admin-page-sub">Productos en venta en la tienda de la página pública</p>
         </div>
         <div className="admin-page-actions">
-          <Link href="/#productos" target="_blank" className="btn-app btn-app-ghost">
+          <Link href="/productos" target="_blank" className="btn-app btn-app-ghost">
             <ExternalLink /> Ver tienda
           </Link>
           <Link href="/admin/products/new" className="btn-app btn-app-primary">

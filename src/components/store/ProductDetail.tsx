@@ -33,7 +33,7 @@ export function ProductDetail({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/branding/logo-horizontal.png?v=2" alt="ODYSS3D" />
         </a>
-        <a href="/#productos" className="btn btn-primary store-nav-cta">
+        <a href="/productos" className="btn btn-primary store-nav-cta">
           Tienda
         </a>
       </header>
@@ -42,7 +42,7 @@ export function ProductDetail({
         <div className="store-crumbs">
           <Link href="/">Inicio</Link>
           <span>/</span>
-          <Link href="/#productos">Productos</Link>
+          <Link href="/productos">Productos</Link>
           {product.category && (
             <>
               <span>/</span>
@@ -142,7 +142,7 @@ export function ProductDetail({
               <p>• Personalizamos a tu gusto: colores y cantidad según disponibilidad.</p>
               <p>• El pedido se confirma por WhatsApp después de agregarlo al cubo.</p>
               <p className="store-back">
-                <ArrowLeft size={14} /> <Link href="/#productos">Volver a todos los productos</Link>
+                <ArrowLeft size={14} /> <Link href="/productos">Volver a todos los productos</Link>
               </p>
             </div>
           </div>
