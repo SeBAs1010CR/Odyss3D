@@ -2090,4 +2090,17 @@ img {
   .carousel-caption {
     bottom: 90px;
   }
+  .carousel-name {
+    font-size: clamp(1.4rem, 6vw, 2rem);
+    margin: 8px 0 12px;
+  }
+  .carousel-price {
+    font-size: 1.1rem;
+  }
+  .carousel-category {
+    font-size: 0.7rem;
+  }
+  .hero-logo {
+    width: clamp(160px, 52vw, 240px);
+  }
 }
