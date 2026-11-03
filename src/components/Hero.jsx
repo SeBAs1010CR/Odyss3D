@@ -1,9 +1,7 @@
 "use client";
 
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
-
-const HeroScene = lazy(() => import("./HeroScene"));
+import ProductCarousel from "./ProductCarousel";
 
 const fadeUp = (delay) => ({
   initial: { opacity: 0, y: 24 },
@@ -24,10 +22,6 @@ export default function Hero() {
         aria-hidden
       />
 
-      <Suspense fallback={null}>
-        <HeroScene />
-      </Suspense>
-
       <div className="container hero-content">
         <motion.img
           src="/images/branding/Logo%20sin%20fondo.png"
@@ -35,26 +29,11 @@ export default function Hero() {
           className="hero-logo"
           {...fadeUp(0.05)}
         />
-
-        <motion.h1 className="hero-title" {...fadeUp(0.2)}>
-          Cuando la idea
-          <span className="hero-accent"> toma forma.</span>
-        </motion.h1>
-
-        <motion.p className="hero-subtitle" {...fadeUp(0.35)}>
-          Fabricamos tus ideas con impresión 3D, diseño, prototipado y
-          fabricación de precisión. De la pantalla al objeto real.
-        </motion.p>
-
-        <motion.div className="hero-actions" {...fadeUp(0.5)}>
-          <a href="/productos" className="btn btn-primary">
-            Explorar productos
-          </a>
-          <a href="#servicios" className="btn btn-secondary">
-            Conocer servicios
-          </a>
-        </motion.div>
       </div>
+
+      <motion.div className="hero-carousel" {...fadeUp(0.2)}>
+        <ProductCarousel />
+      </motion.div>
     </section>
   );
 }
