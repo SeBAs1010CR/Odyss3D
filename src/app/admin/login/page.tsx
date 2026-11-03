@@ -63,7 +63,7 @@ export default function AdminLogin() {
         <div className="login-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/images/branding/logo-horizontal.png?v=2"
+            src="/images/branding/Logo%20sin%20fondo.png"
             alt="ODYSS3D"
             className="login-logo"
           />

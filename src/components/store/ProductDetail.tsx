@@ -31,7 +31,7 @@ export function ProductDetail({
       <header className="store-nav">
         <a href="/" className="store-nav-logo" aria-label="ODYSS3D home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/branding/logo-horizontal.png?v=2" alt="ODYSS3D" />
+          <img src="/images/branding/Logo%20sin%20fondo.png" alt="ODYSS3D" />
         </a>
         <a href="/productos" className="btn btn-primary store-nav-cta">
           Tienda

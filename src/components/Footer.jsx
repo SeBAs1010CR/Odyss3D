@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer-inner">
         <img
-          src="/images/branding/logo-horizontal.png?v=2"
+          src="/images/branding/Logo%20sin%20fondo.png"
           alt="ODYSS3D"
           className="footer-logo"
         />

@@ -94,7 +94,7 @@ preparando nuevos productos."*
 
 ## Marca
 
-- Logos en `public/images/branding/` (`logo-horizontal.png`, `logo-icon.png`).
+- Logos en `public/images/branding/` (`Logo sin fondo.png`, `logo-icon.png`).
 - Sustituir estos archivos actualiza el Navbar, Hero, Footer y favicon.
 
 ## Rendimiento
