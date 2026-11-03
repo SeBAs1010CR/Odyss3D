@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
 import Products from "../components/Products";
+import ProductCarousel from "../components/ProductCarousel";
 import Services from "../components/Services";
 import About from "../components/About";
 import CTASection from "../components/CTASection";
@@ -18,6 +19,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <ProductCarousel />
         <Products />
         <Services />
         <About />

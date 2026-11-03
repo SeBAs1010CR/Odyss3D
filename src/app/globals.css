@@ -1939,3 +1939,151 @@ img {
     width: calc(100vw - 24px);
   }
 }
+/* Carrusel de productos a pantalla completa (Home) */
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 520px;
+  overflow: hidden;
+  background: var(--color-black);
+}
+
+.carousel-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  pointer-events: none;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(5, 6, 8, 0.85) 0%,
+    rgba(5, 6, 8, 0.2) 45%,
+    transparent 70%
+  );
+}
+
+.carousel-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 110px;
+  z-index: 2;
+  padding: 0 clamp(24px, 6vw, 96px);
+  max-width: 760px;
+}
+
+.carousel-category {
+  font-family: var(--font-secondary);
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+}
+
+.carousel-name {
+  font-family: var(--font-primary);
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  margin: 10px 0 18px;
+  color: var(--color-white);
+}
+
+.carousel-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.carousel-price {
+  font-family: var(--font-primary);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(5, 6, 8, 0.45);
+  color: var(--color-white);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.carousel-nav:hover {
+  background: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+.carousel-prev {
+  left: 24px;
+}
+
+.carousel-next {
+  right: 24px;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.carousel-dot.active {
+  width: 28px;
+  background: var(--color-blue);
+}
+
+@media (max-width: 720px) {
+  .carousel-nav {
+    display: none;
+  }
+  .carousel-caption {
+    bottom: 90px;
+  }
+}
