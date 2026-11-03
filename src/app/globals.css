@@ -2104,3 +2104,19 @@ img {
     width: clamp(160px, 52vw, 240px);
   }
 }
+
+/* Logo completo centrado en páginas internas (servicios, nosotros) */
+.page-logo {
+  display: block;
+  width: clamp(200px, 30vw, 360px);
+  height: auto;
+  margin: 130px auto 40px;
+  opacity: 0.95;
+}
+
+@media (max-width: 720px) {
+  .page-logo {
+    width: clamp(160px, 52vw, 240px);
+    margin-top: 110px;
+  }
+}

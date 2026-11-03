@@ -2,8 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
-import Services from "../components/Services";
-import About from "../components/About";
 import CTASection from "../components/CTASection";
 import Footer from "../components/Footer";
 import { CartProvider } from "../lib/store/CartContext";
@@ -17,8 +15,6 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <Services />
-        <About />
         <CTASection />
       </main>
       <Footer />
