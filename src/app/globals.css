@@ -272,11 +272,8 @@ img {
 
 .hero {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 100vh;
   overflow: hidden;
-  padding: 120px 0 48px;
 }
 
 .hero-grid {
@@ -331,10 +328,11 @@ img {
 }
 
 .hero-carousel {
-  position: relative;
-  z-index: 2;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   width: 100%;
-  margin-top: 32px;
+  height: 100%;
 }
 
 .hero-logo {
@@ -1947,10 +1945,10 @@ img {
 }
 /* Carrusel de productos a pantalla completa (Home) */
 .carousel {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 78vh;
-  min-height: 480px;
+  height: 100%;
   overflow: hidden;
   background: var(--color-black);
 }
