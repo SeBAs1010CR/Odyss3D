@@ -46,7 +46,7 @@ export default function FacturaPage() {
       `}</style>
 
       <div className="factura">
-        <img src="/images/branding/Logo%20sin%20fondo.png" alt="ODYSS3D" />
+        <img src="/images/branding/logo-print.png" alt="ODYSS3D" />
         <h1>Pedido {padNumber(toNum(order.number))}</h1>
 
         <div className="row">
