@@ -19,11 +19,24 @@ export default function ProductCarousel() {
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
+    // Imágenes propias del admin (/admin/carrusel); si no hay, usa las de productos.
+    fetch("/api/carousel")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((custom) => {
+        if (Array.isArray(custom) && custom.length > 0) {
+          setSlides(custom.slice(0, MAX_SLIDES).map((s) => ({ key: s.id, image: s.image, name: "" })));
+          return null;
+        }
+        return fetch("/api/products").then((res) => (res.ok ? res.json() : Promise.reject()));
+      })
       .then((data) => {
         if (!Array.isArray(data)) return;
-        setSlides(data.filter((p) => p.image && p.name).slice(0, MAX_SLIDES));
+        setSlides(
+          data
+            .filter((p) => p.image && p.name)
+            .slice(0, MAX_SLIDES)
+            .map((p) => ({ ...p, key: p.id ?? p.name, image: resolveImage(p.image) }))
+        );
       })
       .catch(() => setSlides([]));
   }, []);
@@ -48,11 +61,12 @@ export default function ProductCarousel() {
     >
       {slides.map((p, i) => (
         <div
-          key={p.id ?? p.name}
+          key={p.key}
           className={`carousel-slide${i === index ? " active" : ""}`}
           aria-hidden={i !== index}
         >
           <img src={resolveImage(p.image)} alt={p.name} loading={i === 0 ? "eager" : "lazy"} />
+          {p.name && (
           <div className="carousel-caption">
             {p.category && <span className="carousel-category">{p.category}</span>}
             <h2 className="carousel-name">{p.name}</h2>
@@ -65,6 +79,7 @@ export default function ProductCarousel() {
               )}
             </div>
           </div>
+          )}
         </div>
       ))}
 
@@ -89,7 +104,7 @@ export default function ProductCarousel() {
           <div className="carousel-dots">
             {slides.map((p, i) => (
               <button
-                key={p.id ?? p.name}
+                key={p.key}
                 type="button"
                 className={`carousel-dot${i === index ? " active" : ""}`}
                 onClick={() => setIndex(i)}

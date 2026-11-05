@@ -1175,3 +1175,62 @@ export async function deleteContactRequest(request: ContactRequest): Promise<voi
 }
 
 /* ============ SOLICITUDES DE COTIZACIÓN (fin) ============ */
+/* ---------- Carrusel del Home (imágenes propias) ---------- */
+
+export interface CarouselSlide {
+  id: string;
+  path: string;
+  sort_order: number;
+  url: string;
+}
+
+const carouselPublicUrl = (path: string) =>
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/carousel/${path}`;
+
+export async function fetchCarouselSlides(): Promise<CarouselSlide[]> {
+  const { data, error } = await createClient()
+    .from("carousel_slides")
+    .select("id, path, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (error) throw new Error("No se pudo cargar el carrusel.");
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    path: row.path as string,
+    sort_order: row.sort_order as number,
+    url: carouselPublicUrl(row.path as string),
+  }));
+}
+
+export async function addCarouselSlide(file: File, currentCount: number): Promise<void> {
+  const blob = await optimizeImage(file);
+  const path = `${Date.now()}-${slug(file.name)}`;
+  const client = createClient();
+
+  const { error: upErr } = await client.storage
+    .from("carousel")
+    .upload(path, blob, { contentType: blob.type, upsert: false });
+  if (upErr) throw new Error("No se pudo subir la imagen.");
+
+  const { error } = await client.from("carousel_slides").insert({
+    path,
+    sort_order: currentCount,
+  });
+  if (error) throw new Error("No se pudo guardar la imagen en el carrusel.");
+}
+
+export async function deleteCarouselSlide(slide: CarouselSlide): Promise<void> {
+  const client = createClient();
+  const { error } = await client.from("carousel_slides").delete().eq("id", slide.id);
+  if (error) throw new Error("No se pudo quitar la imagen.");
+  await client.storage.from("carousel").remove([slide.path]);
+}
+
+export async function moveCarouselSlide(a: CarouselSlide, b: CarouselSlide): Promise<void> {
+  const client = createClient();
+  const [r1, r2] = await Promise.all([
+    client.from("carousel_slides").update({ sort_order: b.sort_order }).eq("id", a.id),
+    client.from("carousel_slides").update({ sort_order: a.sort_order }).eq("id", b.id),
+  ]);
+  if (r1.error || r2.error) throw new Error("No se pudo cambiar el orden.");
+}
