@@ -2155,3 +2155,37 @@ img {
     min-height: 0;
   }
 }
+
+/* Home en celular: logo completo en el header y carrusel con textos más chicos */
+@media (max-width: 720px) {
+  .hero-mark {
+    display: none;
+  }
+  .hero-logo {
+    display: block;
+    width: clamp(180px, 58vw, 260px);
+    height: auto;
+    margin: 0 auto 12px;
+  }
+  .carousel-caption {
+    bottom: 56px;
+    padding: 0 16px;
+  }
+  .carousel-category {
+    font-size: 0.6rem;
+  }
+  .carousel-name {
+    font-size: 1.05rem;
+    margin: 4px 0 8px;
+  }
+  .carousel-price {
+    font-size: 0.9rem;
+  }
+  .carousel-meta .btn {
+    padding: 6px 12px;
+    font-size: 0.72rem;
+  }
+  .carousel-dots {
+    bottom: 16px;
+  }
+}
