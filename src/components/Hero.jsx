@@ -29,6 +29,11 @@ export default function Hero() {
           className="hero-logo"
           {...fadeUp(0.05)}
         />
+        <img
+          src="/images/branding/logo-mark.png"
+          alt="ODYSS3D"
+          className="hero-mark"
+        />
       </div>
 
       <motion.div className="hero-carousel" {...fadeUp(0.2)}>

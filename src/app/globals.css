@@ -2121,19 +2121,32 @@ img {
   }
 }
 
-/* Carrusel más chico en celular (Hero) */
+/* Hero en celular: isotipo arriba y carrusel justo debajo del header */
+.hero-mark {
+  display: none;
+}
+
 @media (max-width: 720px) {
   .hero {
     height: auto;
-    padding-top: 96px;
+    padding-top: 84px;
     padding-bottom: 24px;
+  }
+  .hero-logo {
+    display: none;
+  }
+  .hero-mark {
+    display: block;
+    height: 56px;
+    width: auto;
+    margin: 0 auto 12px;
   }
   .hero-carousel {
     position: relative;
     inset: auto;
     height: 52vh;
     min-height: 320px;
-    margin-top: 16px;
+    margin-top: 0;
   }
   .carousel {
     position: relative;
