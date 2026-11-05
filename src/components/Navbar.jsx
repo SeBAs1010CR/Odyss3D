@@ -40,7 +40,7 @@ export default function Navbar() {
       >
         <div className="container nav-inner">
           <a href="/" className="nav-logo">
-            <img src="/images/branding/logo-mark.png" alt="ODYSS3D" className="nav-logo-img" />
+            <img src="/images/branding/Logo%20sin%20fondo.png" alt="ODYSS3D" className="nav-logo-img" />
           </a>
 
           <nav className="nav-links">

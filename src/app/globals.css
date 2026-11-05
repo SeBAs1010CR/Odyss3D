@@ -2189,3 +2189,19 @@ img {
     bottom: 16px;
   }
 }
+
+/* Encabezado con logo completo; en celular el Hero no muestra logo centrado */
+.nav-logo-img {
+  width: clamp(130px, 22vw, 180px);
+  height: auto;
+}
+
+@media (max-width: 720px) {
+  .hero-logo,
+  .hero-mark {
+    display: none;
+  }
+  .hero {
+    padding-top: 76px;
+  }
+}
