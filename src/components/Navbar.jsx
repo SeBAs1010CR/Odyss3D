@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const LINKS = [
-  { label: "Inicio", href: "/" },
-  { label: "Productos", href: "/productos" },
-  { label: "Servicios", href: "/#servicios" },
-  { label: "Nosotros", href: "/#nosotros" },
+  { label: "Inicio", href: "#inicio" },
+  { label: "Productos", href: "#productos" },
+  { label: "Servicios", href: "#servicios" },
+  { label: "Nosotros", href: "#nosotros" },
   { label: "Contacto", href: "/contacto" },
 ];
 
@@ -39,7 +39,7 @@ export default function Navbar() {
         }}
       >
         <div className="container nav-inner">
-          <a href="/" className="nav-logo">
+          <a href="#inicio" className="nav-logo">
             <img
               src="/images/branding/logo-horizontal.png?v=2"
               alt="ODYSS3D"
@@ -55,7 +55,7 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <a href="/productos" className="btn btn-primary nav-cta">
+          <a href="#productos" className="btn btn-primary nav-cta">
             Ver productos
           </a>
 
@@ -106,7 +106,7 @@ export default function Navbar() {
                 </motion.a>
               ))}
               <motion.a
-                href="/productos"
+                href="#productos"
                 className="nav-mobile-cta"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -10,8 +10,8 @@ export default function Footer() {
           className="footer-logo"
         />
         <div className="footer-links">
-          <a href="/">Inicio</a>
-          <a href="/productos">Productos</a>
+          <a href="#inicio">Inicio</a>
+          <a href="#productos">Productos</a>
           <a href="#servicios">Servicios</a>
           <a href="#nosotros">Nosotros</a>
           <a href="/contacto">Contacto</a>

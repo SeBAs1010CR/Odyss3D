@@ -73,7 +73,7 @@ export default function Products() {
     });
   }, [products, search, cat]);
 
-  const linkFor = (p) => (p.id ? `/producto/${p.id}` : "/productos");
+  const linkFor = (p) => (p.id ? `/producto/${p.id}` : "/#productos");
 
   return (
     <section id="productos" className="section products">
