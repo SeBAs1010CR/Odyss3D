@@ -61,6 +61,10 @@ export default function FacturaPage() {
           <span className="label">Teléfono</span>
           <span>{order.customer?.whatsapp ?? "—"}</span>
         </div>
+        <div className="row">
+          <span className="label">Envío</span>
+          <span>{order.transport_type || "—"}</span>
+        </div>
         <div className="block">
           <span className="label">Ubicación</span>
           <div>{order.delivery_address || "—"}</div>
