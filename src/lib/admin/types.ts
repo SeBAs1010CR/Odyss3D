@@ -96,6 +96,8 @@ export interface Order {
   transport_type: string | null;
   delivery_address: string | null;
   transport_cost: number;
+  discount_percent?: number;
+  discount_amount?: number;
   notes: string | null;
   created_by: string | null;
   updated_by: string | null;

@@ -65,6 +65,16 @@ export default function FacturaPage() {
           <span className="label">Envío</span>
           <span>{order.transport_type || "—"}</span>
         </div>
+        {(order.discount_percent || order.discount_amount) ? (
+          <div className="row">
+            <span className="label">Descuento</span>
+            <span>
+              {order.discount_percent ? `${order.discount_percent}%` : ""}
+              {order.discount_percent && order.discount_amount ? " + " : ""}
+              {order.discount_amount ? formatMoney(order.discount_amount) : ""}
+            </span>
+          </div>
+        ) : null}
         <div className="block">
           <span className="label">Ubicación</span>
           <div>{order.delivery_address || "—"}</div>

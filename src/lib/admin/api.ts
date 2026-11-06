@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_INPUTS, mergeConfig } from "@/lib/calculator";
 import { ADMIN_EMAIL_DOMAIN, SETTINGS_DEFAULTS } from "./constants";
 import { startOfRange, startOfDay, toNum } from "./format";
-import { machineFund } from "./pricing";
+import { applyOrderDiscount, machineFund } from "./pricing";
 import { optimizeImage, slug } from "./utils";
 import type {
   Accessory,
@@ -180,6 +180,8 @@ export type NewOrderInput = {
   transport_type: string | null;
   delivery_address: string | null;
   transport_cost: number;
+  discount_percent?: number;
+  discount_amount?: number;
   notes: string | null;
   items: NewOrderItem[];
   accessories: NewOrderAccessory[];
@@ -232,7 +234,8 @@ export async function createOrder(input: NewOrderInput): Promise<Order> {
   const transportCost = Math.round(money(input.transport_cost) * 100) / 100;
   const itemsTotal = items.reduce((s, i) => s + i.total, 0);
   const accessoriesTotal = accessories.reduce((s, a) => s + a.total, 0);
-  const total = Math.round((itemsTotal + accessoriesTotal + transportCost) * 100) / 100;
+  const discount = applyOrderDiscount(itemsTotal + accessoriesTotal, input.discount_percent ?? 0, input.discount_amount ?? 0);
+  const total = Math.round((discount.total + transportCost) * 100) / 100;
   const estimatedProfit = Math.round(
     items.reduce((s, i) => s + (i.unit_price - (i.production_cost ?? 0)) * i.quantity, 0) * 100
   ) / 100;
@@ -246,6 +249,8 @@ export async function createOrder(input: NewOrderInput): Promise<Order> {
       customer_id: input.customer_id,
       status: input.status,
       total,
+      discount_percent: discount.percent,
+      discount_amount: discount.amount,
       estimated_profit: estimatedProfit,
       machine_fund: machineFundValue,
       order_date: input.order_date,
@@ -344,7 +349,8 @@ export async function updateOrderFull(orderId: string, input: OrderFullInput): P
   const transportCost = Math.round(money(input.transport_cost) * 100) / 100;
   const itemsTotal = items.reduce((s, i) => s + i.total, 0);
   const accessoriesTotal = accessories.reduce((s, a) => s + a.total, 0);
-  const total = Math.round((itemsTotal + accessoriesTotal + transportCost) * 100) / 100;
+  const discount = applyOrderDiscount(itemsTotal + accessoriesTotal, input.discount_percent ?? 0, input.discount_amount ?? 0);
+  const total = Math.round((discount.total + transportCost) * 100) / 100;
   const estimatedProfit = Math.round(
     items.reduce((s, i) => s + (i.unit_price - (i.production_cost ?? 0)) * i.quantity, 0) * 100
   ) / 100;
@@ -358,6 +364,8 @@ export async function updateOrderFull(orderId: string, input: OrderFullInput): P
       status: input.status,
       customer_id: input.customer_id,
       total,
+      discount_percent: discount.percent,
+      discount_amount: discount.amount,
       estimated_profit: estimatedProfit,
       machine_fund: machineFundValue,
       order_date: input.order_date,

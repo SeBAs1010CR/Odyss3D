@@ -17,7 +17,7 @@ import {
 } from "@/lib/admin/api";
 import { PAYMENT_METHODS, STATUSES, TRANSPORT_TYPES } from "@/lib/admin/constants";
 import { formatDate, formatDateTime, formatMoney, padNumber, toNum } from "@/lib/admin/format";
-import { machineFund, netProfit } from "@/lib/admin/pricing";
+import { applyOrderDiscount, machineFund, netProfit } from "@/lib/admin/pricing";
 import type {
   Accessory,
   Customer,
@@ -65,6 +65,8 @@ export default function OrderDetailPage() {
     transport_type: "",
     delivery_address: "",
     transport_cost: "",
+    discount_percent: "",
+    discount_amount: "",
     notes: "",
   });
   const [items, setItems] = useState<RowItem[]>([]);
@@ -94,6 +96,8 @@ export default function OrderDetailPage() {
         transport_type: o.transport_type ?? "",
         delivery_address: o.delivery_address ?? "",
         transport_cost: o.transport_cost ? String(o.transport_cost) : "",
+        discount_percent: o.discount_percent ? String(o.discount_percent) : "",
+        discount_amount: o.discount_amount ? String(o.discount_amount) : "",
         notes: o.notes ?? "",
       });
       setItems((o.items ?? []).map((it) => ({
@@ -159,6 +163,8 @@ export default function OrderDetailPage() {
       return { qty, price: a?.price ?? 0, line: qty * (a?.price ?? 0) };
     });
     const transport = money(meta.transport_cost);
+    const subtotal = rows.reduce((s, r) => s + r.line, 0) + accRows.reduce((s, r) => s + r.line, 0);
+    const disc = applyOrderDiscount(subtotal, money(meta.discount_percent), money(meta.discount_amount));
     return {
       count: rows.reduce((s, r) => s + r.qty, 0),
       total: rows.reduce((s, r) => s + r.line, 0),
@@ -166,9 +172,10 @@ export default function OrderDetailPage() {
       accQty: accRows.reduce((s, r) => s + r.qty, 0),
       accTotal: accRows.reduce((s, r) => s + r.line, 0),
       transport,
-      grand: rows.reduce((s, r) => s + r.line, 0) + accRows.reduce((s, r) => s + r.line, 0) + transport,
+      discount: disc.discount,
+      grand: disc.total + transport,
     };
-  }, [items, accessoryQtys, accessoryById, meta.transport_cost]);
+  }, [items, accessoryQtys, accessoryById, meta.transport_cost, meta.discount_percent, meta.discount_amount]);
 
   const onSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -214,6 +221,8 @@ export default function OrderDetailPage() {
         transport_type: meta.transport_type || null,
         delivery_address: meta.delivery_address.trim() || null,
         transport_cost: money(meta.transport_cost),
+        discount_percent: money(meta.discount_percent),
+        discount_amount: money(meta.discount_amount),
         notes: meta.notes || null,
         items: cleanItems,
         accessories: cleanAccessories,
@@ -416,6 +425,25 @@ export default function OrderDetailPage() {
                   onChange={(e) => setMeta({ ...meta, transport_cost: e.target.value })}
                 />
               </Field>
+              <Field label="Descuento (%)">
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={meta.discount_percent}
+                  onChange={(e) => setMeta({ ...meta, discount_percent: e.target.value })}
+                />
+              </Field>
+              <Field label="Descuento (₡)">
+                <InputMoney
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={meta.discount_amount}
+                  onChange={(e) => setMeta({ ...meta, discount_amount: e.target.value })}
+                />
+              </Field>
               <Field label="Dirección de entrega">
                 <TextArea
                   placeholder="Provincia, cantón, señas…"
@@ -435,6 +463,12 @@ export default function OrderDetailPage() {
               <div className="order-summary-row">
                 <span className="label">Accesorios ({totals.accQty})</span>
                 <span className="value">₡{formatMoney(totals.accTotal)}</span>
+              </div>
+            )}
+            {totals.discount > 0 && (
+              <div className="order-summary-row">
+                <span className="label">Descuento</span>
+                <span className="value" style={{ color: "#f59e0b" }}>−₡{formatMoney(totals.discount)}</span>
               </div>
             )}
             {totals.transport > 0 && (

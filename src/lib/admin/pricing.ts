@@ -53,3 +53,12 @@ export function machineFund(profit: number, s: SettingsRecord): number {
 export function netProfit(profit: number, s: SettingsRecord): number {
   return Math.round((profit - machineFund(profit, s)) * 100) / 100;
 }
+/** Descuento de pedido: porcentaje sobre el subtotal y luego monto fijo. El transporte no se descuenta. */
+export function applyOrderDiscount(subtotal: number, percent: number, amount: number) {
+  const pct = Math.min(100, Math.max(0, percent || 0));
+  const amt = Math.max(0, amount || 0);
+  const afterPct = subtotal * (1 - pct / 100);
+  const total = Math.max(0, Math.round((afterPct - amt) * 100) / 100);
+  const discount = Math.round((subtotal - total) * 100) / 100;
+  return { percent: pct, amount: amt, total, discount };
+}

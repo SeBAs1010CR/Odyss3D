@@ -15,7 +15,7 @@ import {
 } from "@/lib/admin/api";
 import { PAYMENT_METHODS, STATUSES, TRANSPORT_TYPES } from "@/lib/admin/constants";
 import { formatMoney, toNum } from "@/lib/admin/format";
-import { discountedPrice, discountPercent, machineFund, netProfit } from "@/lib/admin/pricing";
+import { applyOrderDiscount, discountedPrice, discountPercent, machineFund, netProfit } from "@/lib/admin/pricing";
 import type { Accessory, Customer, FilamentColor, OrderStatus, Product, SettingsRecord } from "@/lib/admin/types";
 import { createId } from "@/lib/admin/utils";
 import { AccessoryPicker } from "@/components/admin/AccessoryPicker";
@@ -59,6 +59,8 @@ export default function NewOrderPage() {
   const [transportType, setTransportType] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [transportCost, setTransportCost] = useState("");
+  const [discountPct, setDiscountPct] = useState("");
+  const [discountAmt, setDiscountAmt] = useState("");
   const [notes, setNotes] = useState("");
 
   const [items, setItems] = useState<RowItem[]>([
@@ -155,6 +157,8 @@ export default function NewOrderPage() {
       return { qty, price: a?.price ?? 0, line: qty * (a?.price ?? 0) };
     });
     const transport = money(transportCost);
+    const subtotal = rows.reduce((s, r) => s + r.line, 0) + accRows.reduce((s, r) => s + r.line, 0);
+    const disc = applyOrderDiscount(subtotal, money(discountPct), money(discountAmt));
     const profit = rows.reduce((s, r) => s + r.profit, 0);
     return {
       count: rows.reduce((s, r) => s + r.qty, 0),
@@ -165,9 +169,10 @@ export default function NewOrderPage() {
       accQty: accRows.reduce((s, r) => s + r.qty, 0),
       accTotal: accRows.reduce((s, r) => s + r.line, 0),
       transport,
-      grand: rows.reduce((s, r) => s + r.line, 0) + accRows.reduce((s, r) => s + r.line, 0) + money(transportCost),
+      discount: disc.discount,
+      grand: disc.total + transport,
     };
-  }, [items, accessoryQtys, accessoryById, transportCost, settings]);
+  }, [items, accessoryQtys, accessoryById, transportCost, discountPct, discountAmt, settings]);
 
   const onSaveCustomer = async (e: FormEvent) => {
     e.preventDefault();
@@ -242,6 +247,8 @@ export default function NewOrderPage() {
         transport_type: transportType || null,
         delivery_address: deliveryAddress.trim() || null,
         transport_cost: money(transportCost),
+        discount_percent: money(discountPct),
+        discount_amount: money(discountAmt),
         notes: notes.trim() || null,
         items: cleanItems,
         accessories: cleanAccessories,
@@ -390,6 +397,12 @@ export default function NewOrderPage() {
               <span className="label">Ganancia neta</span>
               <span className="value" style={{ color: "#4ade80" }}>₡{formatMoney(totals.net)}</span>
             </div>
+            {totals.discount > 0 && (
+              <div className="order-summary-row">
+                <span className="label">Descuento</span>
+                <span className="value" style={{ color: "#f59e0b" }}>−₡{formatMoney(totals.discount)}</span>
+              </div>
+            )}
             <div className="order-summary-row order-total-final">
               <span className="label">Total</span>
               <span className="value">₡{formatMoney(totals.grand)}</span>
@@ -413,6 +426,25 @@ export default function NewOrderPage() {
                   <option key={t} value={t}>{t}</option>
                 ))}
               </SelectBox>
+            </Field>
+            <Field label="Descuento (%)">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                value={discountPct}
+                onChange={(e) => setDiscountPct(e.target.value)}
+              />
+            </Field>
+            <Field label="Descuento (₡)">
+              <InputMoney
+                type="number"
+                min={0}
+                step="0.01"
+                value={discountAmt}
+                onChange={(e) => setDiscountAmt(e.target.value)}
+              />
             </Field>
             <Field label="Costo de transporte">
               <InputMoney
