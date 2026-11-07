@@ -47,6 +47,7 @@ export default function FacturaPage() {
         .factura .block { margin-top: 2mm; word-break: break-word; }
         .factura hr { border: 0; border-top: 1px dashed #000; margin: 2mm 0; }
         .factura .total { font-size: 12px; font-weight: bold; }
+        .factura .legal { margin: 3mm 0 0; text-align: center; font-size: 9px; }
         .print-btn { display: block; margin: 12px auto; padding: 6px 12px; }
         @media print { .print-btn { display: none; } }
       `}</style>
@@ -118,6 +119,10 @@ export default function FacturaPage() {
           <span>Total</span>
           <span>{formatMoney(order.total)}</span>
         </div>
+
+        <p className="legal">
+          <strong><em>No constituye factura ni comprobante electrónico tributario</em></strong>
+        </p>
       </div>
 
       <button type="button" className="print-btn" onClick={() => window.print()}>
