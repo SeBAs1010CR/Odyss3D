@@ -31,6 +31,9 @@ export default function FacturaPage() {
         pixelRatio: 3,
         backgroundColor: "#ffffff",
         cacheBust: true,
+        width: facturaRef.current.offsetWidth,
+        height: facturaRef.current.offsetHeight,
+        style: { margin: "0", transform: "none" },
       });
       const link = document.createElement("a");
       link.download = `factura-${padNumber(toNum(order.number)).replace("#", "")}.png`;
@@ -55,9 +58,9 @@ export default function FacturaPage() {
       <style>{`
         @page { size: 55mm auto; margin: 2mm; }
         html, body { background: #fff; color: #000; margin: 0; }
-        .factura { width: 55mm; max-width: 55mm; margin: 0 auto; padding: 2mm 0;
+        .factura { box-sizing: border-box; width: 55mm; max-width: 55mm; margin: 0; padding: 3mm 4mm;
           font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.35; }
-        .factura img { width: 40mm; display: block; margin: 0 auto 2mm; }
+        .factura img { width: 40mm; max-width: 100%; display: block; margin: 0 auto 2mm; }
         .factura h1 { font-size: 12px; text-align: center; margin: 0 0 2mm; }
         .factura .row { display: flex; justify-content: space-between; gap: 2mm; }
         .factura .label { font-weight: bold; }
