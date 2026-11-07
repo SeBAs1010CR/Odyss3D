@@ -41,7 +41,7 @@ export default function FacturaPage() {
       const fileName = `factura-${padNumber(toNum(order.number)).replace("#", "")}.png`;
       const file = new File([blob], fileName, { type: "image/png" });
 
-      // iPhone/iPad: la hoja de compartir permite guardar la imagen o abrirla en la app de impresión.
+      // iPhone/iPad: la hoja de compartir permite imprimirla o enviarla directo a la app de la impresora.
       if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share({ files: [file], title: fileName });
@@ -51,25 +51,16 @@ export default function FacturaPage() {
         }
       }
 
+      // Sin hoja de compartir (navegadores antiguos): descarga normal, dejando la URL viva un rato
+      // para que el "Visualizar" de la descarga siga funcionando.
       const url = URL.createObjectURL(blob);
-      const isIOS =
-        /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-      // iOS no guarda descargas de forma confiable y su "Visualizar" necesita que la URL siga viva:
-      // abrimos la imagen en una pestaña (mantener presionada para guardarla) y no la revocamos.
-      if (isIOS) {
-        window.open(url, "_blank");
-        return;
-      }
-
       const link = document.createElement("a");
       link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setTimeout(() => URL.revokeObjectURL(url), 10 * 60_000);
     } catch {
       setExportError("No se pudo generar la imagen. Intenta de nuevo.");
     } finally {
