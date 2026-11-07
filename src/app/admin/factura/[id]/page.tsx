@@ -12,7 +12,6 @@ export default function FacturaPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState(false);
-  const [exportError, setExportError] = useState("");
   const facturaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ export default function FacturaPage() {
   const downloadImage = async () => {
     if (!facturaRef.current || !order) return;
     setDownloading(true);
-    setExportError("");
     try {
       const dataUrl = await toPng(facturaRef.current, {
         pixelRatio: 3,
@@ -37,32 +35,10 @@ export default function FacturaPage() {
         height: facturaRef.current.offsetHeight,
         style: { margin: "0", transform: "none" },
       });
-      const blob = await (await fetch(dataUrl)).blob();
-      const fileName = `factura-${padNumber(toNum(order.number)).replace("#", "")}.png`;
-      const file = new File([blob], fileName, { type: "image/png" });
-
-      // iPhone/iPad: la hoja de compartir permite imprimirla o enviarla directo a la app de la impresora.
-      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: fileName });
-          return;
-        } catch (err) {
-          if (err instanceof DOMException && err.name === "AbortError") return;
-        }
-      }
-
-      // Sin hoja de compartir (navegadores antiguos): descarga normal, dejando la URL viva un rato
-      // para que el "Visualizar" de la descarga siga funcionando.
-      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
+      link.download = `factura-${padNumber(toNum(order.number)).replace("#", "")}.png`;
+      link.href = dataUrl;
       link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10 * 60_000);
-    } catch {
-      setExportError("No se pudo generar la imagen. Intenta de nuevo.");
     } finally {
       setDownloading(false);
     }
@@ -172,7 +148,6 @@ export default function FacturaPage() {
       <button type="button" className="print-btn" onClick={downloadImage} disabled={downloading}>
         {downloading ? "Generando imagen…" : "Descargar imagen"}
       </button>
-      {exportError && <p style={{ textAlign: "center", color: "#b91c1c" }}>{exportError}</p>}
     </>
   );
 }
