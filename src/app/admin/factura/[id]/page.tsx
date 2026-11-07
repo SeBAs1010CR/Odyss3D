@@ -34,9 +34,12 @@ export default function FacturaPage() {
         height: facturaRef.current.offsetHeight,
         style: { margin: "0", transform: "none" },
       });
+      // Blob (no data:) para que iPhone pueda "Visualizar" el PNG en su propia vista.
+      // No se revoca la URL: si se borra, la opción Visualizar no abre nada.
+      const blob = await (await fetch(dataUrl)).blob();
       const link = document.createElement("a");
       link.download = `factura-${padNumber(toNum(order.number)).replace("#", "")}.png`;
-      link.href = dataUrl;
+      link.href = URL.createObjectURL(blob);
       link.click();
     } finally {
       setDownloading(false);
