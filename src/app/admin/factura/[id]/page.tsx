@@ -30,7 +30,6 @@ export default function FacturaPage() {
       const dataUrl = await toPng(facturaRef.current, {
         pixelRatio: 3,
         backgroundColor: "#ffffff",
-        cacheBust: true,
         width: facturaRef.current.offsetWidth,
         height: facturaRef.current.offsetHeight,
         style: { margin: "0", transform: "none" },
