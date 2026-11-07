@@ -27,6 +27,12 @@ export default function FacturaPage() {
   if (error) return <p style={{ padding: 16 }}>{error}</p>;
   if (!order) return <p style={{ padding: 16 }}>Cargando…</p>;
 
+  const subtotal =
+    (order.items ?? []).reduce((s, i) => s + Number(i.total), 0) +
+    (order.accessories ?? []).reduce((s, a) => s + Number(a.total), 0);
+  const transport = Number(order.transport_cost) || 0;
+  const discountValue = Math.max(0, Math.round((subtotal - (Number(order.total) - transport)) * 100) / 100);
+
   return (
     <>
       <style>{`
@@ -65,16 +71,6 @@ export default function FacturaPage() {
           <span className="label">Envío</span>
           <span>{order.transport_type || "—"}</span>
         </div>
-        {(order.discount_percent || order.discount_amount) ? (
-          <div className="row">
-            <span className="label">Descuento</span>
-            <span>
-              {order.discount_percent ? `${order.discount_percent}%` : ""}
-              {order.discount_percent && order.discount_amount ? " + " : ""}
-              {order.discount_amount ? formatMoney(order.discount_amount) : ""}
-            </span>
-          </div>
-        ) : null}
         <div className="block">
           <span className="label">Ubicación</span>
           <div>{order.delivery_address || "—"}</div>
@@ -85,10 +81,38 @@ export default function FacturaPage() {
         {(order.items ?? []).map((it) => (
           <div className="row" key={it.id}>
             <span>{it.quantity} x {it.name}</span>
+            <span>{formatMoney(it.total)}</span>
+          </div>
+        ))}
+        {(order.accessories ?? []).map((a) => (
+          <div className="row" key={a.id}>
+            <span>{a.quantity} x {a.name}</span>
+            <span>{formatMoney(a.total)}</span>
           </div>
         ))}
 
         <hr />
+
+        {discountValue > 0 && (
+          <div className="row">
+            <span>Subtotal</span>
+            <span>{formatMoney(subtotal)}</span>
+          </div>
+        )}
+        {discountValue > 0 && (
+          <div className="row">
+            <span>
+              Descuento{order.discount_percent ? ` (${order.discount_percent}%)` : ""}
+            </span>
+            <span>−{formatMoney(discountValue)}</span>
+          </div>
+        )}
+        {transport > 0 && (
+          <div className="row">
+            <span>Envío</span>
+            <span>{formatMoney(transport)}</span>
+          </div>
+        )}
 
         <div className="row total">
           <span>Total</span>
