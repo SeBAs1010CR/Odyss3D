@@ -52,6 +52,17 @@ export default function FacturaPage() {
       }
 
       const url = URL.createObjectURL(blob);
+      const isIOS =
+        /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+      // iOS no guarda descargas de forma confiable y su "Visualizar" necesita que la URL siga viva:
+      // abrimos la imagen en una pestaña (mantener presionada para guardarla) y no la revocamos.
+      if (isIOS) {
+        window.open(url, "_blank");
+        return;
+      }
+
       const link = document.createElement("a");
       link.href = url;
       link.download = fileName;
@@ -59,8 +70,6 @@ export default function FacturaPage() {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      // Safari antiguo ignora "download": en ese caso abrimos la imagen para guardarla desde ahí.
-      window.open(url, "_blank");
     } catch {
       setExportError("No se pudo generar la imagen. Intenta de nuevo.");
     } finally {
