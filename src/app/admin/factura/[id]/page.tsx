@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import { useParams } from "next/navigation";
 import { fetchOrder } from "@/lib/admin/api";
 import { formatMoney, padNumber, toNum } from "@/lib/admin/format";
@@ -10,6 +11,8 @@ export default function FacturaPage() {
   const params = useParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const facturaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchOrder(params.id)
@@ -20,9 +23,23 @@ export default function FacturaPage() {
       .catch((e) => setError(e.message));
   }, [params.id]);
 
-  useEffect(() => {
-    if (order) window.print();
-  }, [order]);
+  const downloadImage = async () => {
+    if (!facturaRef.current || !order) return;
+    setDownloading(true);
+    try {
+      const dataUrl = await toPng(facturaRef.current, {
+        pixelRatio: 3,
+        backgroundColor: "#ffffff",
+        cacheBust: true,
+      });
+      const link = document.createElement("a");
+      link.download = `factura-${padNumber(toNum(order.number)).replace("#", "")}.png`;
+      link.href = dataUrl;
+      link.click();
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (error) return <p style={{ padding: 16 }}>{error}</p>;
   if (!order) return <p style={{ padding: 16 }}>Cargando…</p>;
@@ -52,7 +69,7 @@ export default function FacturaPage() {
         @media print { .print-btn { display: none; } }
       `}</style>
 
-      <div className="factura">
+      <div className="factura" ref={facturaRef}>
         <img src="/images/branding/logo-print.png" alt="ODYSS3D" />
         <h1>Pedido {padNumber(toNum(order.number))}</h1>
 
@@ -125,8 +142,8 @@ export default function FacturaPage() {
         </p>
       </div>
 
-      <button type="button" className="print-btn" onClick={() => window.print()}>
-        Imprimir
+      <button type="button" className="print-btn" onClick={downloadImage} disabled={downloading}>
+        {downloading ? "Generando imagen…" : "Descargar imagen"}
       </button>
     </>
   );
