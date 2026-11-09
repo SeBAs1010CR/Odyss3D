@@ -22,20 +22,6 @@ export default function Hero() {
         aria-hidden
       />
 
-      <div className="container hero-content">
-        <motion.img
-          src="/images/branding/Logo%20sin%20fondo.png"
-          alt="ODYSS3D"
-          className="hero-logo"
-          {...fadeUp(0.05)}
-        />
-        <img
-          src="/images/branding/logo-mark.png"
-          alt="ODYSS3D"
-          className="hero-mark"
-        />
-      </div>
-
       <motion.div className="hero-carousel" {...fadeUp(0.2)}>
         <ProductCarousel />
       </motion.div>
