@@ -16,7 +16,14 @@ export default function CarruselPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const load = () => fetchCarouselSlides().then(setSlides).catch((e) => setError(e.message));
+  const load = () =>
+    fetchCarouselSlides()
+      .then(setSlides)
+      .catch((e) => {
+        // Si falla (p. ej. la tabla aún no existe), mostrar vacío en vez de cargando infinito.
+        setSlides([]);
+        setError(e instanceof Error ? e.message : "No se pudo cargar el carrusel.");
+      });
 
   useEffect(() => {
     load();
