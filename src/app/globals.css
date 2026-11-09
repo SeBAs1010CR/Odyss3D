@@ -2212,3 +2212,16 @@ img {
     object-fit: contain;
   }
 }
+
+/* Celular: la imagen del carrusel pega con el encabezado (sin espacio arriba) */
+@media (max-width: 720px) {
+  .hero {
+    padding-top: 0;
+  }
+  .hero-carousel {
+    margin-top: 0;
+  }
+  .carousel-slide img {
+    object-position: center top;
+  }
+}
