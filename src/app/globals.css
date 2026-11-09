@@ -2205,3 +2205,10 @@ img {
     padding-top: 76px;
   }
 }
+
+/* Celular: el carrusel muestra la foto completa (sin recortar) */
+@media (max-width: 720px) {
+  .carousel-slide img {
+    object-fit: contain;
+  }
+}
