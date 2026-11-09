@@ -2213,10 +2213,11 @@ img {
   }
 }
 
-/* Celular: la imagen del carrusel pega con el encabezado (sin espacio arriba) */
+/* Celular: franja negra del alto del encabezado (76px) y la imagen empieza debajo */
 @media (max-width: 720px) {
   .hero {
-    padding-top: 0;
+    padding-top: 76px;
+    background: var(--color-black);
   }
   .hero-carousel {
     margin-top: 0;
